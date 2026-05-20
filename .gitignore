@@ -1,0 +1,33 @@
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# Java
+target/
+*.class
+*.jar
+*.war
+
+# 本地配置（含敏感信息，不上传）
+application.yml
+
+# Node
+node_modules/
+dist/
+package-lock.json
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+mysql_data/
+redis_data/
+rabbitmq_data/
+
+# Temp
+/tmp/

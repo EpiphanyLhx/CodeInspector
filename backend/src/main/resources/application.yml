@@ -1,0 +1,87 @@
+server:
+  port: 8088
+
+spring:
+  # 开发环境，默认禁用RabbitMQ（需要时改为enabled: true）
+  profiles:
+    active: dev
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/code_inspector?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&createDatabaseIfNotExist=true
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password:
+      database: 0
+      timeout: 10000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+  # RabbitMQ - 开发环境禁用，需启用时改为true
+  rabbitmq:
+    enabled: false
+
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/schema.sql
+      continue-on-error: true
+
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 200MB
+
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# JWT
+jwt:
+  secret: Y29kZS1pbnNwZWN0b3Itand0LXNlY3JldC1rZXktMjAyNC1zZWN1cmU=
+  expiration: 86400000
+
+# AI Config - 通义千问 / 文心一言
+ai:
+  provider: tongyi  # tongyi / wenxin
+  tongyi:
+    api-key: ${TONGYI_API_KEY:sk-a2c80adc366e4adb8f8f6744bba0ff58}
+    base-url: https://dashscope.aliyuncs.com/api/v1
+    model: qwen-max
+  wenxin:
+    api-key: ${WENXIN_API_KEY:your-wenxin-api-key}
+    secret-key: ${WENXIN_SECRET_KEY:your-wenxin-secret-key}
+    base-url: https://aip.baidubce.com
+    model: ernie-4.0
+
+# Code Review
+review:
+  max-tokens-per-chunk: 4000
+  chunk-overlap: 200
+  max-file-size-kb: 500
+  supported-extensions: java,py,js,ts,go
+
+# Git
+git:
+  clone-base-dir: ${java.io.tmpdir}/code-inspector/repos
+  timeout-seconds: 120
+
+# File storage
+file:
+  upload-dir: ${java.io.tmpdir}/code-inspector/uploads
