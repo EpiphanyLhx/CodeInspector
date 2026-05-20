@@ -1,0 +1,269 @@
+:root {
+  --primary-color: #409EFF;
+  --success-color: #67C23A;
+  --warning-color: #E6A23C;
+  --danger-color: #F56C6C;
+  --info-color: #909399;
+  --bg-color: #f5f7fa;
+  --header-height: 60px;
+  --sidebar-width: 220px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg-color);
+  color: #303133;
+}
+
+#app {
+  height: 100%;
+}
+
+a {
+  text-decoration: none;
+  color: var(--primary-color);
+}
+
+/* 通用布局 */
+.app-layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.app-sidebar {
+  width: var(--sidebar-width);
+  background: #1d1e2c;
+  color: #fff;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.app-header {
+  height: var(--header-height);
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.app-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+/* 首页/登录页 */
+.auth-container {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.auth-card {
+  width: 420px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.auth-card h2 {
+  text-align: center;
+  font-size: 28px;
+  margin-bottom: 8px;
+  color: #303133;
+}
+
+.auth-card .subtitle {
+  text-align: center;
+  color: #909399;
+  margin-bottom: 32px;
+}
+
+/* 仪表盘卡片 */
+.stat-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.stat-card .stat-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: #303133;
+}
+
+.stat-card .stat-label {
+  font-size: 14px;
+  color: #909399;
+  margin-top: 4px;
+}
+
+/* 图表容器 */
+.chart-container {
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.chart-container h3 {
+  font-size: 16px;
+  margin-bottom: 16px;
+  color: #303133;
+}
+
+/* 代码编辑器容器 */
+.editor-container {
+  height: 100%;
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* 问题标记行 */
+.issue-gutter-marker {
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50%;
+  margin-top: 4px;
+  margin-left: 4px;
+}
+
+.issue-gutter-marker.critical { background: #F56C6C; }
+.issue-gutter-marker.major { background: #E6A23C; }
+.issue-gutter-marker.minor { background: #409EFF; }
+.issue-gutter-marker.info { background: #909399; }
+
+/* 审查面板 */
+.review-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.review-file-list {
+  flex-shrink: 0;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+.review-editor-area {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.review-editor {
+  flex: 1;
+  overflow: hidden;
+}
+
+.review-issue-list {
+  width: 360px;
+  overflow-y: auto;
+  border-left: 1px solid #e4e7ed;
+  background: #fff;
+  padding: 16px;
+  flex-shrink: 0;
+}
+
+.issue-item {
+  padding: 12px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  border-left: 4px solid #e4e7ed;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.issue-item:hover { background: #f5f7fa; }
+.issue-item.critical { border-left-color: #F56C6C; }
+.issue-item.major { border-left-color: #E6A23C; }
+.issue-item.minor { border-left-color: #409EFF; }
+.issue-item.info { border-left-color: #909399; }
+
+.issue-item .issue-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.issue-item .issue-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.issue-item .issue-file {
+  font-size: 12px;
+  color: #909399;
+  margin-bottom: 4px;
+}
+
+.issue-item .issue-desc {
+  font-size: 13px;
+  color: #606266;
+  line-height: 1.5;
+}
+
+.severity-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.severity-tag.critical { background: #fef0f0; color: #F56C6C; }
+.severity-tag.major { background: #fdf6ec; color: #E6A23C; }
+.severity-tag.minor { background: #ecf5ff; color: #409EFF; }
+.severity-tag.info { background: #f4f4f5; color: #909399; }
+
+.category-tag {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  background: #f0f2f5;
+  color: #606266;
+}
+
+/* 进度条 */
+.review-progress {
+  padding: 16px 20px;
+  background: #fff;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+/* 动画 */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease;
+}
