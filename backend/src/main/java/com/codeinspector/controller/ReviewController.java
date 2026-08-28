@@ -56,6 +56,17 @@ public class ReviewController {
     }
 
     /**
+     * 手动编辑/保存项目代码风格画像
+     */
+    @PutMapping("/projects/{projectId}/style")
+    public Result<Map<String, String>> updateStyle(@PathVariable Long projectId,
+                                                    @RequestBody Map<String, String> body) {
+        String profile = body.get("styleProfile");
+        reviewService.updateStyleProfile(projectId, profile);
+        return Result.success("风格画像已保存", Map.of("styleProfile", profile != null ? profile : ""));
+    }
+
+    /**
      * 获取审查进度
      */
     @GetMapping("/projects/{projectId}/progress")

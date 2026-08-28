@@ -98,6 +98,8 @@ export const analyzeProjectStyle = (projectId) =>
   http.post(`/review/projects/${projectId}/analyze-style`)
 export const getProjectStyle = (projectId) =>
   http.get(`/review/projects/${projectId}/style`)
+export const updateProjectStyle = (projectId, styleProfile) =>
+  http.put(`/review/projects/${projectId}/style`, { styleProfile })
 export const getReviewProgress = (projectId) =>
   http.get(`/review/projects/${projectId}/progress`)
 export const getProjectIssues = (projectId) =>
