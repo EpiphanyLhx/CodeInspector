@@ -7,10 +7,6 @@
         <div class="summary-label">项目名称</div>
       </div>
       <div class="summary-item">
-        <div class="summary-value" :style="{color: scoreColor}">{{ report?.score ?? '-' }}</div>
-        <div class="summary-label">综合评分</div>
-      </div>
-      <div class="summary-item">
         <div class="summary-value" style="color:#303133">{{ allIssues.length }}</div>
         <div class="summary-label">问题总数</div>
       </div>
@@ -164,13 +160,6 @@
             </el-col>
           </el-row>
 
-          <!-- AI评分详情 -->
-          <div class="report-section" v-if="report">
-            <h3>🤖 AI综合评分</h3>
-            <div class="score-gauge-area">
-              <div ref="scoreGaugeRef" style="height:200px;"></div>
-            </div>
-          </div>
         </div>
       </el-tab-pane>
     </el-tabs>
@@ -178,7 +167,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import * as echarts from 'echarts'
 import { getProjectDetail, getProjectFiles, getFileContent,
@@ -215,13 +204,6 @@ const criticalCount = computed(() => allIssues.value.filter(i => i.severity === 
 const majorCount = computed(() => allIssues.value.filter(i => i.severity === 'MAJOR').length)
 const minorCount = computed(() => allIssues.value.filter(i => i.severity === 'MINOR').length)
 
-const scoreColor = computed(() => {
-  const s = report.value?.score ?? 0
-  if (s >= 80) return '#67C23A'
-  if (s >= 60) return '#E6A23C'
-  return '#F56C6C'
-})
-
 const displayIssues = computed(() => {
   let list = filterMode.value === 'current' ? currentFileIssues.value : allIssues.value
   return list.filter(i => activeSeverities.value.includes(i.severity))
@@ -237,8 +219,7 @@ const reportStats = computed(() => {
     { label: '性能', value: r.performanceCount || 0, color: '#67C23A' },
     { label: '最佳实践', value: r.bestPracticeCount || 0, color: '#9254de' },
     { label: '已审查文件', value: r.reviewedFiles || 0, color: '#909399' },
-    { label: '已审查行数', value: r.reviewedLines || 0, color: '#909399' },
-    { label: '综合评分', value: (r.score || 0) + '分', color: '#303133' }
+    { label: '已审查行数', value: r.reviewedLines || 0, color: '#909399' }
   ]
 })
 
@@ -264,17 +245,15 @@ const onFileChange = async (fileId) => {
   if (!fileId) { currentFileContent.value = ''; currentFileIssues.value = []; return }
   codeLoading.value = true
   try {
-    const [fileRes, issueRes] = await Promise.all([
-      getFileContent(fileId),
-      getFileIssues(projectId.value, fileRes?.data?.filePath || '')
-    ])
+    // 先获取文件内容（需要filePath才能查询问题）
+    const fileRes = await getFileContent(fileId)
     currentFileContent.value = fileRes.data?.content || ''
     currentLanguage.value = fileRes.data?.language || 'java'
-    currentFileIssues.value = issueRes.data || []
-    // 修复：用正确的filePath重新获取文件问题
+
+    // 获取文件问题
     if (fileRes.data?.filePath) {
-      const issueRes2 = await getFileIssues(projectId.value, fileRes.data.filePath)
-      currentFileIssues.value = issueRes2.data || []
+      const issueRes = await getFileIssues(projectId.value, fileRes.data.filePath)
+      currentFileIssues.value = issueRes.data || []
     }
   } catch { /* ignore */ }
   codeLoading.value = false
@@ -291,15 +270,15 @@ const scrollToLine = (issue) => {
 }
 
 // ECharts
-let severityPieChart, categoryBarChart, scoreGaugeChart
+let severityPieChart, categoryBarChart
 const severityPieRef = ref(null)
 const categoryBarRef = ref(null)
-const scoreGaugeRef = ref(null)
 
 watch(activeTab, async (tab) => {
   if (tab === 'report') {
     await nextTick()
-    renderCharts()
+    // 延迟确保 Element Plus 标签页过渡动画完成，容器有有效尺寸
+    setTimeout(() => renderCharts(), 150)
   }
 })
 
@@ -307,13 +286,23 @@ const renderCharts = () => {
   if (allIssues.value.length === 0) return
   renderSeverityPie()
   renderCategoryBar()
-  if (report.value) renderScoreGauge()
+}
+
+// 统一 resize 处理
+const handleAllResize = () => {
+  severityPieChart?.resize()
+  categoryBarChart?.resize()
 }
 
 const renderSeverityPie = () => {
   if (!severityPieRef.value) return
+  const el = severityPieRef.value
+  if (el.offsetWidth === 0 || el.offsetHeight === 0) {
+    setTimeout(renderSeverityPie, 150)
+    return
+  }
   severityPieChart?.dispose()
-  severityPieChart = echarts.init(severityPieRef.value)
+  severityPieChart = echarts.init(el)
   const labels = { CRITICAL: '严重', MAJOR: '重要', MINOR: '次要', INFO: '提示' }
   const colors = { CRITICAL: '#F56C6C', MAJOR: '#E6A23C', MINOR: '#409EFF', INFO: '#909399' }
   const counts = { CRITICAL: criticalCount.value, MAJOR: majorCount.value, MINOR: minorCount.value,
@@ -324,7 +313,7 @@ const renderSeverityPie = () => {
     series: [{
       type: 'pie', radius: ['45%', '70%'], center: ['38%', '50%'],
       itemStyle: { borderRadius: 4 },
-      data: Object.entries(counts).filter(([,v]) => v > 0).map(([k, v]) => ({
+      data: Object.entries(counts).map(([k, v]) => ({
         name: labels[k], value: v, itemStyle: { color: colors[k] }
       }))
     }]
@@ -333,8 +322,13 @@ const renderSeverityPie = () => {
 
 const renderCategoryBar = () => {
   if (!categoryBarRef.value) return
+  const el = categoryBarRef.value
+  if (el.offsetWidth === 0 || el.offsetHeight === 0) {
+    setTimeout(renderCategoryBar, 150)
+    return
+  }
   categoryBarChart?.dispose()
-  categoryBarChart = echarts.init(categoryBarRef.value)
+  categoryBarChart = echarts.init(el)
   const cats = { SECURITY: '安全', BUG: 'Bug', CODE_STYLE: '代码风格', PERFORMANCE: '性能', BEST_PRACTICE: '最佳实践' }
   const counts = { SECURITY: 0, BUG: 0, CODE_STYLE: 0, PERFORMANCE: 0, BEST_PRACTICE: 0 }
   allIssues.value.forEach(i => { if (counts[i.category] !== undefined) counts[i.category]++ })
@@ -354,26 +348,16 @@ const renderCategoryBar = () => {
   })
 }
 
-const renderScoreGauge = () => {
-  if (!scoreGaugeRef.value) return
-  scoreGaugeChart?.dispose()
-  scoreGaugeChart = echarts.init(scoreGaugeRef.value)
-  const score = report.value?.score || 0
-  scoreGaugeChart.setOption({
-    series: [{
-      type: 'gauge', startAngle: 200, endAngle: -20, center: ['50%', '55%'], radius: '90%',
-      min: 0, max: 100,
-      axisLine: { lineStyle: { width: 16,
-        color: [[0.3, '#F56C6C'], [0.6, '#E6A23C'], [0.8, '#409EFF'], [1, '#67C23A']]
-      }},
-      pointer: { length: '70%', width: 6, itemStyle: { color: '#303133' } },
-      detail: { valueAnimation: true, fontSize: 22, offsetCenter: [0, '70%'], formatter: '{value}分' },
-      data: [{ value: score }]
-    }]
-  })
-}
+onMounted(() => {
+  loadAll()
+  window.addEventListener('resize', handleAllResize)
+})
 
-onMounted(() => loadAll())
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleAllResize)
+  severityPieChart?.dispose()
+  categoryBarChart?.dispose()
+})
 </script>
 
 <style scoped>
@@ -395,7 +379,7 @@ onMounted(() => loadAll())
 /* Tab */
 .review-tabs { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 .review-tabs :deep(.el-tabs__content) { flex: 1; overflow: hidden; }
-.review-tabs :deep(.el-tab-pane) { height: 100%; }
+.review-tabs :deep(.el-tab-pane) { height: 100%; overflow-y: auto; }
 
 /* 双栏布局 */
 .review-split-layout { display: flex; height: 100%; gap: 12px; }

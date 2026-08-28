@@ -48,23 +48,28 @@ public class StatsController {
         data.put("openIssues", allIssues.stream()
                 .filter(i -> "OPEN".equals(i.getStatus())).count());
 
-        // 严重程度分布
-        Map<String, Long> severityDistribution = allIssues.stream()
-                .collect(Collectors.groupingBy(ReviewIssue::getSeverity, Collectors.counting()));
+        // 严重程度分布 (确保所有级别都出现，即使数量为0)
+        Map<String, Long> severityDistribution = new LinkedHashMap<>();
+        severityDistribution.put("CRITICAL", 0L);
+        severityDistribution.put("MAJOR", 0L);
+        severityDistribution.put("MINOR", 0L);
+        severityDistribution.put("INFO", 0L);
+        allIssues.stream()
+                .collect(Collectors.groupingBy(ReviewIssue::getSeverity, Collectors.counting()))
+                .forEach(severityDistribution::put);
         data.put("severityDistribution", severityDistribution);
 
-        // 分类分布
-        Map<String, Long> categoryDistribution = allIssues.stream()
-                .collect(Collectors.groupingBy(ReviewIssue::getCategory, Collectors.counting()));
+        // 分类分布 (确保所有分类都出现，即使数量为0)
+        Map<String, Long> categoryDistribution = new LinkedHashMap<>();
+        categoryDistribution.put("SECURITY", 0L);
+        categoryDistribution.put("BUG", 0L);
+        categoryDistribution.put("CODE_STYLE", 0L);
+        categoryDistribution.put("PERFORMANCE", 0L);
+        categoryDistribution.put("BEST_PRACTICE", 0L);
+        allIssues.stream()
+                .collect(Collectors.groupingBy(ReviewIssue::getCategory, Collectors.counting()))
+                .forEach(categoryDistribution::put);
         data.put("categoryDistribution", categoryDistribution);
-
-        // 平均评分
-        List<ReviewReport> reports = reviewReportMapper.selectList(null);
-        double avgScore = reports.stream()
-                .filter(r -> r.getScore() != null)
-                .mapToInt(ReviewReport::getScore)
-                .average().orElse(0);
-        data.put("averageScore", Math.round(avgScore * 100.0) / 100.0);
 
         return Result.success(data);
     }
@@ -85,7 +90,6 @@ public class StatsController {
                     Map<String, Object> point = new LinkedHashMap<>();
                     point.put("projectId", r.getProjectId());
                     point.put("bugRate", r.getBugRate());
-                    point.put("score", r.getScore());
                     point.put("date", r.getCreateTime().toLocalDate().toString());
                     return point;
                 })

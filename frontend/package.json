@@ -8,14 +8,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@element-plus/icons-vue": "^2.3.1",
+    "@splinetool/runtime": "^1.12.98",
     "axios": "^1.6.2",
     "echarts": "^5.4.3",
     "element-plus": "^2.4.4",
     "monaco-editor": "^0.44.0",
     "pinia": "^2.1.7",
     "vue": "^3.3.13",
-    "vue-router": "^4.2.5",
-    "@element-plus/icons-vue": "^2.3.1"
+    "vue-router": "^4.2.5"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.5.2",

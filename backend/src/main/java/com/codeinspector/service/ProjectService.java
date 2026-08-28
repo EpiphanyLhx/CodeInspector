@@ -2,6 +2,7 @@ package com.codeinspector.service;
 
 import cn.hutool.core.io.FileUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.codeinspector.common.BusinessException;
 import com.codeinspector.model.dto.CreateProjectDTO;
@@ -48,12 +49,14 @@ public class ProjectService {
      */
     @Transactional
     public Project createProject(CreateProjectDTO dto, Long userId) {
-        // 检查团队权限
-        TeamMember member = teamMemberMapper.selectOne(new LambdaQueryWrapper<TeamMember>()
-                .eq(TeamMember::getTeamId, dto.getTeamId())
-                .eq(TeamMember::getUserId, userId));
-        if (member == null) {
-            throw new BusinessException("你不是该团队的成员");
+        // 如果指定了团队，检查团队权限
+        if (dto.getTeamId() != null) {
+            TeamMember member = teamMemberMapper.selectOne(new LambdaQueryWrapper<TeamMember>()
+                    .eq(TeamMember::getTeamId, dto.getTeamId())
+                    .eq(TeamMember::getUserId, userId));
+            if (member == null) {
+                throw new BusinessException("你不是该团队的成员");
+            }
         }
 
         Project project = new Project();
@@ -106,6 +109,16 @@ public class ProjectService {
         project.setTotalLines(totalLines);
         project.setReviewStatus("PENDING");
         projectMapper.updateById(project);
+        // 代码变更后旧风格画像失效，显式清空（updateById 默认不更新 null 字段），保留 styleEnabled 偏好
+        projectMapper.update(null, new LambdaUpdateWrapper<Project>()
+                .eq(Project::getId, project.getId())
+                .set(Project::getStyleProfile, null)
+                .set(Project::getStyleAnalyzedAt, null));
+        project.setStyleProfile(null);
+        project.setStyleAnalyzedAt(null);
+
+        // 上传新代码后清除旧审查数据和锁
+        reviewService.resetReviewState(projectId);
 
         return project;
     }
@@ -137,6 +150,16 @@ public class ProjectService {
         project.setTotalLines(totalLines);
         project.setReviewStatus("PENDING");
         projectMapper.updateById(project);
+        // 代码变更后旧风格画像失效，显式清空（updateById 默认不更新 null 字段），保留 styleEnabled 偏好
+        projectMapper.update(null, new LambdaUpdateWrapper<Project>()
+                .eq(Project::getId, project.getId())
+                .set(Project::getStyleProfile, null)
+                .set(Project::getStyleAnalyzedAt, null));
+        project.setStyleProfile(null);
+        project.setStyleAnalyzedAt(null);
+
+        // 拉取新代码后清除旧审查数据和锁
+        reviewService.resetReviewState(projectId);
 
         return project;
     }
@@ -225,6 +248,12 @@ public class ProjectService {
         long remainingFiles = codeFileMapper.countByProjectId(projectId);
         project.setTotalFiles((int) remainingFiles);
         projectMapper.updateById(project);
+
+        // 如果删除文件后没有文件了，重置审查状态
+        if (remainingFiles == 0) {
+            reviewService.resetReviewState(projectId);
+        }
+
         log.info("文件[{}]已从项目[{}]删除", fileId, projectId);
     }
 
@@ -241,6 +270,8 @@ public class ProjectService {
         vo.setTotalFiles(project.getTotalFiles());
         vo.setTotalLines(project.getTotalLines());
         vo.setReviewStatus(project.getReviewStatus());
+        vo.setStyleEnabled(project.getStyleEnabled());
+        vo.setStyleAnalyzed(project.getStyleProfile() != null && !project.getStyleProfile().isBlank());
         vo.setCreatorId(project.getCreatorId());
         vo.setCreateTime(project.getCreateTime());
         vo.setUpdateTime(project.getUpdateTime());
@@ -252,11 +283,6 @@ public class ProjectService {
         vo.setMajorCount((int) issues.stream().filter(i -> "MAJOR".equals(i.getSeverity())).count());
         vo.setMinorCount((int) issues.stream().filter(i -> "MINOR".equals(i.getSeverity())).count());
         vo.setInfoCount((int) issues.stream().filter(i -> "INFO".equals(i.getSeverity())).count());
-
-        // 综合评分
-        ReviewReport report = reviewReportMapper.selectOne(new LambdaQueryWrapper<ReviewReport>()
-                .eq(ReviewReport::getProjectId, project.getId()));
-        vo.setScore(report != null ? report.getScore() : null);
 
         return vo;
     }

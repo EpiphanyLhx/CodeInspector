@@ -1,6 +1,7 @@
 package com.codeinspector.controller;
 
 import com.codeinspector.common.Result;
+import com.codeinspector.model.dto.StartReviewDTO;
 import com.codeinspector.model.entity.ReviewIssue;
 import com.codeinspector.model.entity.ReviewReport;
 import com.codeinspector.model.entity.ReviewTask;
@@ -23,12 +24,35 @@ public class ReviewController {
 
     /**
      * 启动项目审查
+     * 可通过请求体 styleEnabled=true 开启"按用户代码风格给出审查建议"
      */
     @PostMapping("/projects/{projectId}/start")
     public Result<Map<String, Object>> startReview(@PathVariable Long projectId,
+                                                    @RequestBody(required = false) StartReviewDTO dto,
                                                     @AuthenticationPrincipal User user) {
-        reviewService.startReview(projectId, user.getId());
-        return Result.success("审查任务已启动，请等待处理完成", null);
+        boolean styleEnabled = dto != null && Boolean.TRUE.equals(dto.getStyleEnabled());
+        reviewService.startReview(projectId, user.getId(), styleEnabled);
+        String msg = styleEnabled ? "审查任务已启动（按你的代码风格审查），请等待处理完成"
+                : "审查任务已启动，请等待处理完成";
+        return Result.success(msg, null);
+    }
+
+    /**
+     * 手动分析项目代码风格画像
+     */
+    @PostMapping("/projects/{projectId}/analyze-style")
+    public Result<Map<String, String>> analyzeStyle(@PathVariable Long projectId) {
+        String profile = reviewService.analyzeStyle(projectId);
+        return Result.success("风格画像已生成", Map.of("styleProfile", profile != null ? profile : ""));
+    }
+
+    /**
+     * 获取项目当前的代码风格画像
+     */
+    @GetMapping("/projects/{projectId}/style")
+    public Result<Map<String, String>> getStyle(@PathVariable Long projectId) {
+        String profile = reviewService.getStyleProfile(projectId);
+        return Result.success(Map.of("styleProfile", profile != null ? profile : ""));
     }
 
     /**

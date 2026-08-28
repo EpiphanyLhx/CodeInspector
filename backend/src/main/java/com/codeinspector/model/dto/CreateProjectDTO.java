@@ -6,8 +6,7 @@ import lombok.Data;
 
 @Data
 public class CreateProjectDTO {
-    @NotNull(message = "团队ID不能为空")
-    private Long teamId;
+    private Long teamId;  // 可选，不填则为个人项目
     @NotBlank(message = "项目名称不能为空")
     private String name;
     private String description;

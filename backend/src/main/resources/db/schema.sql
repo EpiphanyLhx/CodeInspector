@@ -57,6 +57,9 @@ CREATE TABLE IF NOT EXISTS `project` (
     `total_files` INT DEFAULT 0 COMMENT '文件总数',
     `total_lines` BIGINT DEFAULT 0 COMMENT '代码总行数',
     `review_status` VARCHAR(32) DEFAULT 'PENDING' COMMENT '审查状态: PENDING/IN_PROGRESS/COMPLETED/FAILED',
+    `style_profile` TEXT COMMENT '代码风格画像(自动分析生成)',
+    `style_enabled` TINYINT NOT NULL DEFAULT 0 COMMENT '是否启用按用户代码风格审查: 1是 0否',
+    `style_analyzed_at` DATETIME COMMENT '风格画像最后分析时间',
     `creator_id` BIGINT NOT NULL COMMENT '创建者ID',
     `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -155,10 +158,9 @@ CREATE TABLE IF NOT EXISTS `review_report` (
     `style_count` INT DEFAULT 0 COMMENT '代码风格问题数',
     `performance_count` INT DEFAULT 0 COMMENT '性能问题数',
     `best_practice_count` INT DEFAULT 0 COMMENT '最佳实践问题数',
-    `bug_rate` DECIMAL(5,4) COMMENT 'Bug率',
+    `bug_rate` DECIMAL(10,4) COMMENT 'Bug率',
     `reviewed_files` INT DEFAULT 0 COMMENT '已审查文件数',
     `reviewed_lines` BIGINT DEFAULT 0 COMMENT '已审查行数',
-    `score` INT COMMENT '综合评分(0-100)',
     `summary` TEXT COMMENT '审查总结',
     `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -178,6 +180,29 @@ CREATE TABLE IF NOT EXISTS `operation_log` (
     INDEX `idx_user` (`user_id`),
     INDEX `idx_time` (`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='操作日志表';
+
+-- 用户API密钥配置表
+CREATE TABLE IF NOT EXISTS `user_api_key` (
+    `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+    `user_id` BIGINT NOT NULL COMMENT '用户ID',
+    `provider` VARCHAR(32) NOT NULL COMMENT 'AI提供商: tongyi/wenxin/openai/custom',
+    `api_key_encrypted` TEXT COMMENT 'API Key(AES加密)',
+    `secret_key_encrypted` TEXT COMMENT 'Secret Key(AES加密, 文心一言等需要)',
+    `base_url` VARCHAR(512) COMMENT 'API端点URL',
+    `model_name` VARCHAR(128) NOT NULL COMMENT '模型名称',
+    `is_active` TINYINT NOT NULL DEFAULT 0 COMMENT '是否当前激活: 1是 0否',
+    `is_valid` TINYINT NOT NULL DEFAULT 1 COMMENT '是否已验证: 1已验证 0未验证',
+    `last_validated_at` DATETIME COMMENT '最后验证时间',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX `idx_user` (`user_id`),
+    INDEX `idx_user_active` (`user_id`, `is_active`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户API密钥配置表';
+
+-- 兼容已存在的数据库: 为 project 表补充代码风格相关字段(已存在则忽略报错)
+ALTER TABLE `project` ADD COLUMN `style_profile` TEXT COMMENT '代码风格画像(自动分析生成)' AFTER `review_status`;
+ALTER TABLE `project` ADD COLUMN `style_enabled` TINYINT NOT NULL DEFAULT 0 COMMENT '是否启用按用户代码风格审查: 1是 0否' AFTER `style_profile`;
+ALTER TABLE `project` ADD COLUMN `style_analyzed_at` DATETIME COMMENT '风格画像最后分析时间' AFTER `style_enabled`;
 
 -- 插入默认管理员 (密码: admin123, BCrypt加密)
 INSERT INTO `user` (`username`, `password`, `email`, `role`) VALUES

@@ -39,7 +39,9 @@ public class ReviewService {
     private final CodeFileMapper codeFileMapper;
     private final CodeAnalysisService codeAnalysisService;
     private final AIService aiService;
+    private final CodeStyleService codeStyleService;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final ApiKeyService apiKeyService;
 
     @Autowired(required = false)
     private ReviewTaskProducer reviewTaskProducer;
@@ -50,7 +52,9 @@ public class ReviewService {
                          ReviewReportMapper reviewReportMapper, ProjectMapper projectMapper,
                          CodeChunkMapper codeChunkMapper, CodeFileMapper codeFileMapper,
                          CodeAnalysisService codeAnalysisService, AIService aiService,
+                         CodeStyleService codeStyleService,
                          RedisTemplate<String, Object> redisTemplate,
+                         ApiKeyService apiKeyService,
                          @org.springframework.context.annotation.Lazy ReviewTaskExecutor reviewTaskExecutor) {
         this.reviewTaskMapper = reviewTaskMapper;
         this.reviewIssueMapper = reviewIssueMapper;
@@ -60,18 +64,25 @@ public class ReviewService {
         this.codeFileMapper = codeFileMapper;
         this.codeAnalysisService = codeAnalysisService;
         this.aiService = aiService;
+        this.codeStyleService = codeStyleService;
         this.redisTemplate = redisTemplate;
+        this.apiKeyService = apiKeyService;
         this.reviewTaskExecutor = reviewTaskExecutor;
     }
 
     private static final String REVIEW_PROGRESS_KEY = "review:progress:";
     private static final String REVIEW_LOCK_KEY = "review:lock:project:";
 
+    private static final Set<String> VALID_SEVERITIES = Set.of("CRITICAL", "MAJOR", "MINOR", "INFO");
+    private static final Set<String> VALID_CATEGORIES =
+            Set.of("SECURITY", "BUG", "CODE_STYLE", "PERFORMANCE", "BEST_PRACTICE");
+
     /**
      * 启动项目审查 - 创建所有切片审查任务并发送到RabbitMQ
+     * @param styleEnabled 是否按用户代码风格给出审查建议
      */
     @Transactional
-    public void startReview(Long projectId, Long userId) {
+    public void startReview(Long projectId, Long userId, boolean styleEnabled) {
         // Redis锁防止重复审查
         String lockKey = REVIEW_LOCK_KEY + projectId;
         Boolean locked = redisTemplate.opsForValue()
@@ -83,6 +94,20 @@ public class ReviewService {
         Project project = projectMapper.selectById(projectId);
         if (project == null) {
             throw new BusinessException("项目不存在");
+        }
+
+        // 代码风格偏好：启用时若画像尚未生成则现场分析
+        if (styleEnabled) {
+            if (project.getStyleProfile() == null || project.getStyleProfile().isBlank()) {
+                log.info("项目[{}]启用风格审查但画像为空，开始自动分析代码风格", projectId);
+                codeStyleService.analyzeAndSaveStyle(projectId);
+                // 重新读取，拿到分析后写入的画像
+                project = projectMapper.selectById(projectId);
+            }
+            project.setStyleEnabled(1);
+            log.info("项目[{}]已启用按用户代码风格审查", projectId);
+        } else {
+            project.setStyleEnabled(0);
         }
 
         // 更新项目状态
@@ -146,12 +171,38 @@ public class ReviewService {
             CodeFile codeFile = codeFileMapper.selectById(chunk.getFileId());
             String fileName = codeFile != null ? codeFile.getFileName() : "unknown";
 
+            // 获取用户自定义API Key（如果配置了Active的）
+            UserApiKey userKey = apiKeyService.getActiveDecryptedKey(task.getUserId());
+
+            // 读取项目的代码风格画像（启用风格审查时注入 prompt）
+            String styleProfile = null;
+            Project project = projectMapper.selectById(task.getProjectId());
+            if (project != null && project.getStyleEnabled() != null && project.getStyleEnabled() == 1
+                    && project.getStyleProfile() != null && !project.getStyleProfile().isBlank()) {
+                styleProfile = project.getStyleProfile();
+            }
+
+            // 记录使用的AI提供商和模型
+            if (userKey != null) {
+                task.setAiProvider(userKey.getProvider() + "(custom)");
+                task.setAiModel(userKey.getModelName());
+                if (userKey.getIsValid() == null || userKey.getIsValid() != 1) {
+                    log.warn("审查切片[{}]使用用户自定义API(未验证状态): provider={}, model={}",
+                            task.getId(), userKey.getProvider(), userKey.getModelName());
+                } else {
+                    log.debug("审查切片[{}]使用用户自定义API: provider={}, model={}",
+                            task.getId(), userKey.getProvider(), userKey.getModelName());
+                }
+            }
+
             // 调用AI审查
             JSONObject aiResult = aiService.reviewCodeChunk(
                     chunk.getChunkContent(),
                     chunk.getElementName(),
                     chunk.getChunkType(),
-                    fileName
+                    fileName,
+                    userKey,
+                    styleProfile
             );
 
             // 解析审查结果
@@ -168,22 +219,20 @@ public class ReviewService {
             task.setFinishTime(LocalDateTime.now());
             reviewTaskMapper.updateById(task);
 
-            // 事务提交后再检查是否全部完成，避免读取到未提交状态
-            org.springframework.transaction.support.TransactionSynchronizationManager
-                .registerSynchronization(new org.springframework.transaction.support.TransactionSynchronization() {
-                    @Override
-                    public void afterCommit() {
-                        checkAndGenerateReport(task.getProjectId());
-                    }
-                });
-
         } catch (Exception e) {
             log.error("审查切片[{}]失败: ", task.getId(), e);
             task.setStatus("FAILED");
-            task.setErrorMsg(e.getMessage());
+            task.setErrorMsg(e.getMessage() != null ? e.getMessage().substring(0, Math.min(200, e.getMessage().length())) : "未知错误");
             task.setFinishTime(LocalDateTime.now());
             reviewTaskMapper.updateById(task);
         }
+    }
+
+    /**
+     * 任务完成后调用，检查是否全部完成并生成报告
+     */
+    public void afterTaskComplete(Long projectId) {
+        checkAndGenerateReport(projectId);
     }
 
     /**
@@ -204,10 +253,22 @@ public class ReviewService {
         issue.setLineStart(chunkStartLine + relativeStartLine - 1);
         issue.setLineEnd(chunkStartLine + relativeEndLine - 1);
 
-        issue.setSeverity(issueJson.getString("severity") != null
-                ? issueJson.getString("severity").toUpperCase() : "MINOR");
-        issue.setCategory(issueJson.getString("category") != null
-                ? issueJson.getString("category").toUpperCase() : "CODE_STYLE");
+        String severity = issueJson.getString("severity");
+        if (severity != null) severity = severity.trim().toUpperCase();
+        if (!VALID_SEVERITIES.contains(severity)) {
+            log.warn("切片[{}]返回非法severity: {}, 回退为MINOR", task.getId(), severity);
+            severity = "MINOR";
+        }
+        issue.setSeverity(severity);
+
+        String category = issueJson.getString("category");
+        if (category != null) category = category.trim().toUpperCase();
+        if (!VALID_CATEGORIES.contains(category)) {
+            log.warn("切片[{}]返回非法category: {}, 回退为BEST_PRACTICE", task.getId(), category);
+            category = "BEST_PRACTICE";
+        }
+        issue.setCategory(category);
+
         issue.setTitle(issueJson.getString("title"));
         issue.setDescription(issueJson.getString("description"));
         issue.setSuggestion(issueJson.getString("suggestion"));
@@ -234,29 +295,63 @@ public class ReviewService {
      * 检查并生成审查报告
      */
     private void checkAndGenerateReport(Long projectId) {
-        // 从数据库直接统计任务状态（比Redis更可靠）
-        List<ReviewTask> allTasks = reviewTaskMapper.selectList(
-                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<ReviewTask>()
-                        .eq(ReviewTask::getProjectId, projectId));
-        long total = allTasks.size();
-        long completed = allTasks.stream().filter(t -> "COMPLETED".equals(t.getStatus())).count();
-        long failed = allTasks.stream().filter(t -> "FAILED".equals(t.getStatus())).count();
+        // 使用Redis锁防止并发生成报告
+        String genLockKey = "review:genlock:" + projectId;
+        Boolean locked = redisTemplate.opsForValue()
+                .setIfAbsent(genLockKey, 1, 120, TimeUnit.SECONDS);
+        if (Boolean.FALSE.equals(locked)) {
+            log.info("项目[{}]报告正在生成中，跳过重复检测", projectId);
+            return;
+        }
 
-        log.info("项目[{}]审查进度: {}/{} 完成, {} 失败", projectId, completed, total, failed);
+        try {
+            // 从数据库直接统计任务状态（比Redis更可靠）
+            List<ReviewTask> allTasks = reviewTaskMapper.selectList(
+                    new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<ReviewTask>()
+                            .eq(ReviewTask::getProjectId, projectId));
+            long total = allTasks.size();
+            long completed = allTasks.stream().filter(t -> "COMPLETED".equals(t.getStatus())).count();
+            long failed = allTasks.stream().filter(t -> "FAILED".equals(t.getStatus())).count();
 
-        if (total > 0 && (completed + failed) >= total) {
-            generateReport(projectId);
-            redisTemplate.delete(REVIEW_LOCK_KEY + projectId);
-            redisTemplate.delete(REVIEW_PROGRESS_KEY + projectId);
-            log.info("项目[{}]审查全部完成，报告已生成", projectId);
+            log.info("项目[{}]审查进度: {}/{} 完成, {} 失败", projectId, completed, total, failed);
+
+            if (total > 0 && (completed + failed) >= total) {
+                // 全部失败则标记为失败状态
+                if (completed == 0 && failed > 0) {
+                    Project project = projectMapper.selectById(projectId);
+                    if (project != null && !"COMPLETED".equals(project.getReviewStatus())) {
+                        project.setReviewStatus("FAILED");
+                        projectMapper.updateById(project);
+                        log.warn("项目[{}]所有审查任务均失败，状态更新为FAILED", projectId);
+                    }
+                } else {
+                    try {
+                        generateReport(projectId);
+                        log.info("项目[{}]审查全部完成，报告已生成", projectId);
+                    } catch (Exception e) {
+                        log.error("项目[{}]报告生成失败: ", projectId, e);
+                        // 报告生成失败时标记项目为失败
+                        Project project = projectMapper.selectById(projectId);
+                        if (project != null && !"COMPLETED".equals(project.getReviewStatus())) {
+                            project.setReviewStatus("FAILED");
+                            projectMapper.updateById(project);
+                        }
+                    }
+                }
+                // 无论报告是否成功生成，都释放审查锁（所有任务已结束）
+                redisTemplate.delete(REVIEW_LOCK_KEY + projectId);
+                redisTemplate.delete(REVIEW_PROGRESS_KEY + projectId);
+            }
+        } finally {
+            redisTemplate.delete(genLockKey);
         }
     }
 
     /**
      * 生成审查报告 - 统计数据
      */
-    @Transactional
     public void generateReport(Long projectId) {
+        log.info("开始生成项目[{}]审查报告", projectId);
         List<ReviewIssue> issues = reviewIssueMapper.findByProjectId(projectId);
         List<Map<String, Object>> severityStats = reviewIssueMapper.countBySeverity(projectId);
         List<Map<String, Object>> categoryStats = reviewIssueMapper.countByCategory(projectId);
@@ -303,10 +398,6 @@ public class ReviewService {
         report.setReviewedFiles(codeFileMapper.countByProjectId(projectId).intValue());
         report.setReviewedLines(totalLines);
 
-        // 综合评分
-        int score = calculateScore(issues, totalLines);
-        report.setScore(score);
-
         // 生成总结
         report.setSummary(generateSummary(report));
 
@@ -322,26 +413,6 @@ public class ReviewService {
         projectMapper.updateById(project);
     }
 
-    /**
-     * 综合评分算法
-     */
-    private int calculateScore(List<ReviewIssue> issues, long totalLines) {
-        if (issues.isEmpty()) return 100;
-
-        double penalty = 0;
-        for (ReviewIssue issue : issues) {
-            switch (issue.getSeverity()) {
-                case "CRITICAL" -> penalty += 5;
-                case "MAJOR" -> penalty += 3;
-                case "MINOR" -> penalty += 1;
-                case "INFO" -> penalty += 0.3;
-            }
-        }
-
-        double densityPenalty = (penalty * 1000.0) / totalLines;
-        return Math.max(0, (int) Math.round(100 - densityPenalty));
-    }
-
     private String generateSummary(ReviewReport report) {
         StringBuilder sb = new StringBuilder();
         sb.append("本次审查共发现").append(report.getTotalIssues()).append("个问题，");
@@ -349,14 +420,13 @@ public class ReviewService {
             sb.append("其中严重问题").append(report.getCriticalCount()).append("个，需立即修复；");
         }
         if (report.getBugCount() > 0) {
-            sb.append("潜在Bug").append(report.getBugCount()).append("个；");
+            sb.append("潜在Bug").append(report.getBugCount()).append("个。");
         }
-        sb.append("综合评分").append(report.getScore()).append("分。");
         return sb.toString();
     }
 
     /**
-     * 获取审查进度
+     * 获取审查进度（自动修复卡住的项目）
      */
     public Map<String, Object> getReviewProgress(Long projectId) {
         Map<String, Object> progress = new HashMap<>();
@@ -368,7 +438,41 @@ public class ReviewService {
         long failed = allTasks.stream().filter(t -> "FAILED".equals(t.getStatus())).count();
         progress.put("total", total);
         progress.put("completed", completed + failed);
-        progress.put("percentage", total == 0 ? 0 : (int)((completed + failed) * 100 / total));
+        int percentage = total == 0 ? 0 : (int)((completed + failed) * 100 / total);
+        progress.put("percentage", percentage);
+
+        // 自动修复：任务全部完成但项目状态仍为IN_PROGRESS
+        // 处理两种情况：1) 旧数据卡住 2) 异步报告生成尚未提交
+        if (percentage >= 100 && total > 0) {
+            Project project = projectMapper.selectById(projectId);
+            if (project != null && "IN_PROGRESS".equals(project.getReviewStatus())) {
+                log.info("检测到项目[{}]任务全部完成但状态卡住，自动生成报告", projectId);
+                checkAndGenerateReport(projectId);
+
+                // 如果报告正在由其他线程生成（锁被占用），等待其完成
+                String genLockKey = "review:genlock:" + projectId;
+                for (int retry = 0; retry < 10; retry++) {
+                    project = projectMapper.selectById(projectId);
+                    if (project != null && !"IN_PROGRESS".equals(project.getReviewStatus())) {
+                        break; // 状态已更新，无需重试
+                    }
+                    // 检查是否还在生成中（锁仍被持有）
+                    Boolean lockExists = redisTemplate.hasKey(genLockKey);
+                    if (Boolean.FALSE.equals(lockExists)) {
+                        // 锁已释放但状态未变，再尝试一次生成
+                        checkAndGenerateReport(projectId);
+                        break;
+                    }
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                }
+            }
+        }
+
         return progress;
     }
 
@@ -389,14 +493,31 @@ public class ReviewService {
 
         IssueStatsVO stats = new IssueStatsVO();
         stats.setTotalIssues(issues.size());
-        stats.setSeverityStats(severityData.stream()
+
+        // 确保所有严重程度级别都出现，即使数量为0
+        Map<String, Long> severityMap = new LinkedHashMap<>();
+        severityMap.put("CRITICAL", 0L);
+        severityMap.put("MAJOR", 0L);
+        severityMap.put("MINOR", 0L);
+        severityMap.put("INFO", 0L);
+        severityMap.putAll(severityData.stream()
                 .collect(Collectors.toMap(
                         m -> (String) m.get("severity"),
                         m -> ((Number) m.get("cnt")).longValue())));
-        stats.setCategoryStats(categoryData.stream()
+        stats.setSeverityStats(severityMap);
+
+        // 确保所有分类都出现，即使数量为0
+        Map<String, Long> categoryMap = new LinkedHashMap<>();
+        categoryMap.put("SECURITY", 0L);
+        categoryMap.put("BUG", 0L);
+        categoryMap.put("CODE_STYLE", 0L);
+        categoryMap.put("PERFORMANCE", 0L);
+        categoryMap.put("BEST_PRACTICE", 0L);
+        categoryMap.putAll(categoryData.stream()
                 .collect(Collectors.toMap(
                         m -> (String) m.get("category"),
                         m -> ((Number) m.get("cnt")).longValue())));
+        stats.setCategoryStats(categoryMap);
         return stats;
     }
 
@@ -416,6 +537,28 @@ public class ReviewService {
                         .eq(ReviewReport::getProjectId, projectId));
     }
 
+    /**
+     * 手动触发项目代码风格分析并返回画像文本
+     */
+    public String analyzeStyle(Long projectId) {
+        Project project = projectMapper.selectById(projectId);
+        if (project == null) {
+            throw new BusinessException("项目不存在");
+        }
+        return codeStyleService.analyzeAndSaveStyle(projectId);
+    }
+
+    /**
+     * 获取项目当前的代码风格画像（可能为 null）
+     */
+    public String getStyleProfile(Long projectId) {
+        Project project = projectMapper.selectById(projectId);
+        if (project == null) {
+            throw new BusinessException("项目不存在");
+        }
+        return project.getStyleProfile();
+    }
+
     private void clearOldReviewResults(Long projectId) {
         // 删除旧问题
         List<ReviewIssue> oldIssues = reviewIssueMapper.findByProjectId(projectId);
@@ -427,5 +570,30 @@ public class ReviewService {
         if (oldReport != null) {
             reviewReportMapper.deleteById(oldReport.getId());
         }
+        // 删除旧审查任务（避免进度计算错误）
+        List<ReviewTask> oldTasks = reviewTaskMapper.selectList(
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<ReviewTask>()
+                        .eq(ReviewTask::getProjectId, projectId));
+        for (ReviewTask task : oldTasks) {
+            reviewTaskMapper.deleteById(task.getId());
+        }
+        log.info("已清除项目[{}]的旧审查数据", projectId);
+    }
+
+    /**
+     * 重置项目的审查状态（删除文件/重新上传时调用）
+     */
+    public void resetReviewState(Long projectId) {
+        Project project = projectMapper.selectById(projectId);
+        if (project != null) {
+            project.setReviewStatus("PENDING");
+            projectMapper.updateById(project);
+        }
+        // 清除旧审查数据
+        clearOldReviewResults(projectId);
+        // 释放Redis锁
+        redisTemplate.delete(REVIEW_LOCK_KEY + projectId);
+        redisTemplate.delete(REVIEW_PROGRESS_KEY + projectId);
+        log.info("项目[{}]审查状态已重置", projectId);
     }
 }

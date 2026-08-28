@@ -24,7 +24,6 @@ public class ReviewReport {
     private BigDecimal bugRate;
     private Integer reviewedFiles;
     private Long reviewedLines;
-    private Integer score;
     private String summary;
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
