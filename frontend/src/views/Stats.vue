@@ -5,7 +5,7 @@
       <div class="toolbar-left">
         <h2>深度统计分析</h2>
         <span class="subtitle" v-if="selectedProjectId">当前项目：{{ selectedProject?.name }}</span>
-        <span class="subtitle" v-else>全局汇总视图</span>
+        <span class="subtitle" v-else>我的全部代码汇总</span>
       </div>
       <div class="toolbar-right">
         <el-select v-model="selectedProjectId" placeholder="全部项目" clearable
@@ -99,15 +99,16 @@ let extraChart = null
 
 const handleExtraResize = () => extraChart?.resize()
 
-const loadAll = async () => {
+const loadAll = async (skipChart = false) => {
   const r = await loadGlobalStats()
   severityData.value = r.severity
   categoryData.value = r.category
   report.value = null
   // 全部项目时显示趋势图，不需要extra chart
-  if (extraChartRef.value) {
+  if (!skipChart && extraChartRef.value) {
     renderEmptyExtraChart()
   }
+  return r
 }
 
 const loadProject = async () => {
@@ -162,9 +163,17 @@ const renderFileHeatmap = (issues) => {
 onMounted(async () => {
   pageLoading.value = true
   await loadProjects()
-  await loadAll()
+  // 先加载"我的全部代码"汇总，后端同时返回最新已审查项目ID
+  const global = await loadAll(true)
+  // 默认统计当前用户最新上传且已完成审查的项目
+  if (global.latestProjectId) {
+    selectedProjectId.value = global.latestProjectId
+    await loadProject()
+  }
   try { trendData.value = await loadTrendData() } catch {}
-  nextTick(() => renderEmptyExtraChart())
+  nextTick(() => {
+    if (!selectedProjectId.value) renderEmptyExtraChart()
+  })
   pageLoading.value = false
   window.addEventListener('resize', handleExtraResize)
 })
