@@ -25,10 +25,12 @@ CREATE TABLE IF NOT EXISTS `team` (
     `name` VARCHAR(128) NOT NULL COMMENT '团队名称',
     `description` VARCHAR(512) COMMENT '团队描述',
     `owner_id` BIGINT NOT NULL COMMENT '创建者ID',
+    `invite_code` VARCHAR(16) NULL COMMENT '团队邀请码',
     `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `deleted` TINYINT NOT NULL DEFAULT 0,
-    INDEX `idx_owner` (`owner_id`)
+    INDEX `idx_owner` (`owner_id`),
+    INDEX `idx_invite_code` (`invite_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='团队表';
 
 -- 团队成员表
@@ -206,6 +208,10 @@ ALTER TABLE `project` ADD COLUMN `style_analyzed_at` DATETIME COMMENT '风格画
 
 -- 兼容已存在的数据库: team_id 允许 NULL(个人项目), 旧表可能为 NOT NULL
 ALTER TABLE `project` MODIFY COLUMN `team_id` BIGINT NULL DEFAULT NULL COMMENT '所属团队ID( NULL 表示个人项目)';
+
+-- 兼容已存在的数据库: 为 team 表补充邀请码字段(已存在则忽略报错)
+ALTER TABLE `team` ADD COLUMN `invite_code` VARCHAR(16) NULL COMMENT '团队邀请码' AFTER `owner_id`;
+ALTER TABLE `team` ADD INDEX `idx_invite_code` (`invite_code`);
 
 -- 插入默认管理员 (密码: admin123, BCrypt加密)
 INSERT INTO `user` (`username`, `password`, `email`, `role`) VALUES

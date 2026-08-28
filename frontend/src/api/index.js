@@ -53,12 +53,29 @@ export const register = (params) => http.post('/auth/register', null, { params }
 // ================ 团队 ================
 export const createTeam = (data) => http.post('/teams', data)
 export const getMyTeams = () => http.get('/teams/my')
+export const deleteTeam = (teamId) => http.delete(`/teams/${teamId}`)
+
+// 邀请码
+export const getTeamInviteCode = (teamId) => http.get(`/teams/${teamId}/invite-code`)
+export const generateTeamInviteCode = (teamId) => http.post(`/teams/${teamId}/invite-code/generate`)
+export const regenerateTeamInviteCode = (teamId) => http.post(`/teams/${teamId}/invite-code/regenerate`)
+export const joinTeamByCode = (inviteCode) => http.post('/teams/join', { inviteCode })
+
+// 成员
 export const getTeamMembers = (teamId) => http.get(`/teams/${teamId}/members`)
 export const addTeamMember = (teamId, userId, role) =>
   http.post(`/teams/${teamId}/members`, { userId, role })
 export const removeTeamMember = (teamId, userId) =>
   http.delete(`/teams/${teamId}/members/${userId}`)
-export const deleteTeam = (teamId) => http.delete(`/teams/${teamId}`)
+export const updateTeamMemberRole = (teamId, userId, role) =>
+  http.put(`/teams/${teamId}/members/${userId}/role`, { role })
+
+// 团队项目与审查
+export const getTeamProjects = (teamId) => http.get(`/teams/${teamId}/projects`)
+export const getMemberProjects = (teamId, userId) =>
+  http.get(`/teams/${teamId}/members/${userId}/projects`)
+export const getMemberReviews = (teamId, userId) =>
+  http.get(`/teams/${teamId}/members/${userId}/reviews`)
 
 // ================ 项目 ================
 export const createProject = (data) => http.post('/projects', data)
