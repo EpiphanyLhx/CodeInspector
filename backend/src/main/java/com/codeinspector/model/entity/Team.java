@@ -12,6 +12,7 @@ public class Team {
     private String name;
     private String description;
     private Long ownerId;
+    private String inviteCode;
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
     @TableField(fill = FieldFill.INSERT_UPDATE)
