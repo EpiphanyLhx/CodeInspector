@@ -18,6 +18,7 @@ export function useStats() {
     return {
       severity: d.severityDistribution || {},
       category: d.categoryDistribution || {},
+      latestProjectId: d.latestProjectId || null,
       report: null,
       issues: [],
       trend: null
