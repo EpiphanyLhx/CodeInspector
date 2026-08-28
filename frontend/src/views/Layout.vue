@@ -8,10 +8,6 @@
       </div>
       <el-menu :default-active="activeMenu" router background-color="#1d1e2c"
         text-color="rgba(255,255,255,0.7)" active-text-color="#fff" style="border:none;margin-top:8px;">
-        <el-menu-item index="/dashboard">
-          <el-icon><Odometer /></el-icon>
-          <span>仪表盘</span>
-        </el-menu-item>
         <el-menu-item index="/projects">
           <el-icon><Folder /></el-icon>
           <span>项目管理</span>
@@ -27,6 +23,10 @@
         <el-menu-item index="/review-center">
           <el-icon><DocumentChecked /></el-icon>
           <span>审查详情</span>
+        </el-menu-item>
+        <el-menu-item index="/profile">
+          <el-icon><User /></el-icon>
+          <span>个人信息</span>
         </el-menu-item>
       </el-menu>
     </div>
@@ -52,7 +52,7 @@
             </span>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item>
+                <el-dropdown-item @click="$router.push('/profile')">
                   <el-icon><User /></el-icon> 个人信息
                 </el-dropdown-item>
                 <el-dropdown-item divided @click="handleLogout">

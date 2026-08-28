@@ -20,6 +20,9 @@ public class Project {
     private Integer totalFiles;
     private Long totalLines;
     private String reviewStatus;  // PENDING / IN_PROGRESS / COMPLETED / FAILED
+    private String styleProfile;  // 代码风格画像(自动分析生成)
+    private Integer styleEnabled; // 是否启用按用户代码风格审查: 1是 0否
+    private LocalDateTime styleAnalyzedAt; // 风格画像最后分析时间
     private Long creatorId;
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;

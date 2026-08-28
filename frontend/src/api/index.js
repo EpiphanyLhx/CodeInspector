@@ -42,6 +42,12 @@ http.interceptors.response.use(
 export const login = (data) => http.post('/auth/login', data)
 export const logout = () => http.post('/auth/logout')
 export const getCurrentUser = () => http.get('/auth/me')
+export const updateProfile = (data) => http.put('/auth/profile', data)
+export const changePassword = (data) => http.put('/auth/password', data)
+export const uploadAvatar = (file) => {
+  const fd = new FormData(); fd.append('file', file)
+  return http.post('/auth/avatar', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+}
 export const register = (params) => http.post('/auth/register', null, { params })
 
 // ================ 团队 ================
@@ -80,10 +86,18 @@ export const getFileContent = (fileId) =>
   http.get(`/code/files/${fileId}`)
 export const getProjectChunks = (projectId) =>
   http.get(`/code/projects/${projectId}/chunks`)
+export const getCodeHistory = (userId, status) =>
+  http.get('/code/history', { params: { userId, status } })
+export const deleteCodeHistory = (projectId) =>
+  http.delete(`/code/history/${projectId}`)
 
 // ================ 审查 ================
-export const startReview = (projectId) =>
-  http.post(`/review/projects/${projectId}/start`)
+export const startReview = (projectId, data) =>
+  http.post(`/review/projects/${projectId}/start`, data || {})
+export const analyzeProjectStyle = (projectId) =>
+  http.post(`/review/projects/${projectId}/analyze-style`)
+export const getProjectStyle = (projectId) =>
+  http.get(`/review/projects/${projectId}/style`)
 export const getReviewProgress = (projectId) =>
   http.get(`/review/projects/${projectId}/progress`)
 export const getProjectIssues = (projectId) =>
@@ -98,5 +112,13 @@ export const getReviewReport = (projectId) =>
 // ================ 统计 ================
 export const getDashboard = () => http.get('/stats/dashboard')
 export const getBugRateTrend = () => http.get('/stats/bug-rate-trend')
+
+// ================ API Key 管理 ================
+export const getApiKeys = () => http.get('/api-keys')
+export const saveApiKey = (data) => http.post('/api-keys', data)
+export const activateApiKey = (id) => http.put(`/api-keys/${id}/activate`)
+export const validateApiKey = (id) => http.post(`/api-keys/${id}/validate`)
+export const deleteApiKey = (id) => http.delete(`/api-keys/${id}`)
+export const getModelsForProvider = (provider) => http.get(`/api-keys/models/${provider}`)
 
 export default http

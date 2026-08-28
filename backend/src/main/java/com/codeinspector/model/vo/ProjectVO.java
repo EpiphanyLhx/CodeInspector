@@ -17,6 +17,8 @@ public class ProjectVO {
     private Integer totalFiles;
     private Long totalLines;
     private String reviewStatus;
+    private Integer styleEnabled;   // 是否启用按用户代码风格审查
+    private Boolean styleAnalyzed;  // 风格画像是否已生成
     private Long creatorId;
     private String creatorName;
     private LocalDateTime createTime;
@@ -27,5 +29,4 @@ public class ProjectVO {
     private Integer majorCount;
     private Integer minorCount;
     private Integer infoCount;
-    private Integer score;
 }

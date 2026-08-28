@@ -25,12 +25,6 @@
                 <el-tag type="info" size="small">{{ project.language || 'Java' }}</el-tag>
               </div>
             </div>
-            <div style="text-align:right;flex-shrink:0;margin-left:12px;">
-              <div style="font-size:24px;font-weight:700;color:#409EFF;">
-                {{ project.score ?? '-' }}
-              </div>
-              <div style="font-size:12px;color:#909399;">评分</div>
-            </div>
           </div>
           <div style="margin-top:12px;display:flex;gap:16px;font-size:12px;color:#909399;">
             <span>{{ project.totalFiles || 0 }} 文件</span>
@@ -63,8 +57,9 @@
     <!-- 创建项目对话框 -->
     <el-dialog v-model="showCreateDialog" title="新建项目" width="520px">
       <el-form :model="createForm" label-width="90px">
-        <el-form-item label="所属团队" required>
-          <el-select v-model="createForm.teamId" placeholder="选择团队" style="width:100%">
+        <el-form-item label="所属团队">
+          <el-select v-model="createForm.teamId" placeholder="个人项目（可选）" clearable style="width:100%">
+            <el-option label="👤 个人项目（不归属团队）" :value="null" />
             <el-option v-for="team in teams" :key="team.id"
               :label="team.name" :value="team.id" />
           </el-select>
@@ -151,7 +146,7 @@ const loadTeams = async () => {
 }
 
 const handleCreate = async () => {
-  if (!createForm.name || !createForm.teamId) {
+  if (!createForm.name) {
     ElMessage.warning('请填写必填项')
     return
   }

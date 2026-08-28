@@ -14,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -102,5 +103,62 @@ public class AuthService {
         user.setRole("DEVELOPER");
         user.setStatus(1);
         userMapper.insert(user);
+    }
+
+    /**
+     * 更新用户资料
+     */
+    public User updateProfile(Long userId, Map<String, String> body) {
+        User user = userMapper.selectById(userId);
+        if (user == null) throw new BusinessException("用户不存在");
+
+        if (body.containsKey("username")) user.setUsername(body.get("username"));
+        if (body.containsKey("email")) user.setEmail(body.get("email"));
+        if (body.containsKey("avatar")) user.setAvatar(body.get("avatar"));
+        if (body.containsKey("role")) user.setRole(body.get("role"));
+
+        userMapper.updateById(user);
+        return user;
+    }
+
+    /**
+     * 修改密码
+     */
+    public void changePassword(Long userId, com.codeinspector.model.dto.PasswordChangeDTO dto) {
+        User user = userMapper.selectById(userId);
+        if (user == null) throw new BusinessException("用户不存在");
+
+        if (!passwordEncoder.matches(dto.getOldPassword(), user.getPassword())) {
+            throw new BusinessException("旧密码不正确");
+        }
+
+        user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        userMapper.updateById(user);
+    }
+
+    /**
+     * 上传头像
+     */
+    public String uploadAvatar(Long userId, org.springframework.web.multipart.MultipartFile file) {
+        User user = userMapper.selectById(userId);
+        if (user == null) throw new BusinessException("用户不存在");
+
+        try {
+            String uploadDir = System.getProperty("java.io.tmpdir") + "/code-inspector/avatars";
+            java.io.File dir = new java.io.File(uploadDir);
+            if (!dir.exists()) dir.mkdirs();
+
+            String fileName = userId + "_" + System.currentTimeMillis() + "_" + file.getOriginalFilename();
+            java.io.File dest = new java.io.File(dir, fileName);
+            file.transferTo(dest);
+
+            String avatarUrl = "/api/files/avatars/" + fileName;
+            user.setAvatar(avatarUrl);
+            userMapper.updateById(user);
+            return avatarUrl;
+        } catch (Exception e) {
+            log.error("头像上传失败", e);
+            throw new BusinessException("头像上传失败");
+        }
     }
 }

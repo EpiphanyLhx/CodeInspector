@@ -11,14 +11,8 @@ const routes = [
   {
     path: '/',
     component: () => import('@/views/Layout.vue'),
-    redirect: '/dashboard',
+    redirect: '/projects',
     children: [
-      {
-        path: 'dashboard',
-        name: 'Dashboard',
-        component: () => import('@/views/Dashboard.vue'),
-        meta: { title: '仪表盘', icon: 'Odometer' }
-      },
       {
         path: 'projects',
         name: 'ProjectList',
@@ -54,6 +48,12 @@ const routes = [
         name: 'ReviewCenter',
         component: () => import('@/views/ReviewCenter.vue'),
         meta: { title: '审查详情', icon: 'DocumentChecked' }
+      },
+      {
+        path: 'profile',
+        name: 'Profile',
+        component: () => import('@/views/Profile.vue'),
+        meta: { title: '个人信息', icon: 'User' }
       }
     ]
   }
@@ -69,7 +69,7 @@ router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
   if (to.meta.guest) {
     if (authStore.isLoggedIn) {
-      return next('/dashboard')
+      return next('/projects')
     }
     return next()
   }

@@ -10,14 +10,11 @@ target/
 *.class
 *.jar
 *.war
-
-# 本地配置（含敏感信息，不上传）
-application.yml
+!backend/src/main/resources/application.yml
 
 # Node
 node_modules/
 dist/
-package-lock.json
 *.log
 
 # OS
