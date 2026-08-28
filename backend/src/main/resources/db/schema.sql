@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS `team_member` (
 -- 项目表
 CREATE TABLE IF NOT EXISTS `project` (
     `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
-    `team_id` BIGINT NOT NULL COMMENT '所属团队ID',
+    `team_id` BIGINT NULL DEFAULT NULL COMMENT '所属团队ID( NULL 表示个人项目)',
     `name` VARCHAR(256) NOT NULL COMMENT '项目名称',
     `description` VARCHAR(1024) COMMENT '项目描述',
     `source_type` VARCHAR(32) NOT NULL COMMENT '来源: UPLOAD/GIT',
@@ -203,6 +203,9 @@ CREATE TABLE IF NOT EXISTS `user_api_key` (
 ALTER TABLE `project` ADD COLUMN `style_profile` TEXT COMMENT '代码风格画像(自动分析生成)' AFTER `review_status`;
 ALTER TABLE `project` ADD COLUMN `style_enabled` TINYINT NOT NULL DEFAULT 0 COMMENT '是否启用按用户代码风格审查: 1是 0否' AFTER `style_profile`;
 ALTER TABLE `project` ADD COLUMN `style_analyzed_at` DATETIME COMMENT '风格画像最后分析时间' AFTER `style_enabled`;
+
+-- 兼容已存在的数据库: team_id 允许 NULL(个人项目), 旧表可能为 NOT NULL
+ALTER TABLE `project` MODIFY COLUMN `team_id` BIGINT NULL DEFAULT NULL COMMENT '所属团队ID( NULL 表示个人项目)';
 
 -- 插入默认管理员 (密码: admin123, BCrypt加密)
 INSERT INTO `user` (`username`, `password`, `email`, `role`) VALUES
