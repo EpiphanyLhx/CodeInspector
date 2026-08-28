@@ -192,18 +192,28 @@
   <!-- 代码风格画像对话框 -->
   <el-dialog v-model="showStyleDialog" title="代码风格画像" width="640px">
     <div v-loading="styleAnalyzing" style="min-height:120px;">
-      <el-alert v-if="!styleProfile && !styleAnalyzing" type="info" :closable="false"
+      <el-alert v-if="!styleProfile && !styleAnalyzing && !styleEditing" type="info" :closable="false"
         show-icon style="margin-bottom:12px;"
         title="尚未生成风格画像"
-        description="点击「开始分析」，系统将扫描项目代码，自动提取缩进、大括号、命名、注释、日志方式、框架使用等风格特征。开启「按我的代码风格审查」后，审查建议将遵循这些风格。" />
-      <pre v-if="styleProfile" class="style-profile-text">{{ styleProfile }}</pre>
+        description="点击「自动分析」，系统将扫描项目代码，自动提取缩进、大括号、命名、注释、日志方式、框架使用等风格特征。你也可以点击「手动编辑」自行编写风格要求。开启「代码风格审查」后，审查建议将遵循这些风格。" />
+      <pre v-if="styleProfile && !styleEditing" class="style-profile-text">{{ styleProfile }}</pre>
+      <el-input v-if="styleEditing" v-model="styleDraft" type="textarea"
+        :rows="14" placeholder="在此编写或修改代码风格要求，例如：&#10;1. 缩进使用4空格&#10;2. 大括号采用同行风格&#10;3. 日志使用 Slf4j，禁止 System.out&#10;4. 所有方法必须添加 Javadoc 注释"
+        class="style-edit-textarea" />
     </div>
     <template #footer>
-      <el-button @click="showStyleDialog = false">关闭</el-button>
-      <el-button type="primary" @click="analyzeStyle" :loading="styleAnalyzing"
-        :disabled="files.length === 0">
-        {{ styleProfile ? '重新分析' : '开始分析' }}
-      </el-button>
+      <template v-if="!styleEditing">
+        <el-button @click="showStyleDialog = false">关闭</el-button>
+        <el-button @click="startEditStyle">编辑</el-button>
+        <el-button type="primary" @click="analyzeStyle" :loading="styleAnalyzing"
+          :disabled="files.length === 0">
+          {{ styleProfile ? '重新分析' : '自动分析' }}
+        </el-button>
+      </template>
+      <template v-else>
+        <el-button @click="cancelEditStyle">取消</el-button>
+        <el-button type="success" @click="saveStyle" :loading="styleSaving">保存</el-button>
+      </template>
     </template>
   </el-dialog>
 </template>
@@ -215,7 +225,7 @@ import { getProjectDetail, getProjectFiles, getFileContent, getFileIssues,
   getProjectIssues,
   uploadProjectCode,
   pullFromGit, startReview, getReviewProgress, deleteProjectFile,
-  analyzeProjectStyle, getProjectStyle } from '@/api'
+  analyzeProjectStyle, getProjectStyle, updateProjectStyle } from '@/api'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import CodeEditor from '@/components/CodeEditor.vue'
 
@@ -234,6 +244,9 @@ const styleEnabled = ref(false)
 const styleProfile = ref('')
 const showStyleDialog = ref(false)
 const styleAnalyzing = ref(false)
+const styleEditing = ref(false)
+const styleDraft = ref('')
+const styleSaving = ref(false)
 
 const infoCards = computed(() => [
   { label: '代码文件', value: project.value?.totalFiles || 0, color: '#409EFF' },
@@ -322,6 +335,28 @@ const analyzeStyle = async () => {
     ElMessage.success('代码风格画像已生成')
   } catch { /* ignore */ }
   styleAnalyzing.value = false
+}
+
+const startEditStyle = () => {
+  styleDraft.value = styleProfile.value || ''
+  styleEditing.value = true
+}
+
+const cancelEditStyle = () => {
+  styleEditing.value = false
+  styleDraft.value = ''
+}
+
+const saveStyle = async () => {
+  styleSaving.value = true
+  try {
+    const res = await updateProjectStyle(projectId.value, styleDraft.value)
+    styleProfile.value = res.data?.styleProfile || ''
+    styleEditing.value = false
+    styleDraft.value = ''
+    ElMessage.success('风格画像已保存')
+  } catch { /* ignore */ }
+  styleSaving.value = false
 }
 
 const startProgressPolling = () => {
@@ -537,5 +572,9 @@ onUnmounted(() => {
   padding: 14px 16px; font-size: 13px; line-height: 1.8; color: #303133;
   white-space: pre-wrap; word-break: break-word; margin: 0;
   font-family: "SF Mono", "Menlo", "Consolas", monospace;
+}
+.style-edit-textarea :deep(.el-textarea__inner) {
+  font-family: "SF Mono", "Menlo", "Consolas", monospace;
+  font-size: 13px; line-height: 1.8;
 }
 </style>

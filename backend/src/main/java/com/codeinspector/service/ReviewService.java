@@ -559,6 +559,21 @@ public class ReviewService {
         return project.getStyleProfile();
     }
 
+    /**
+     * 手动编辑/保存项目代码风格画像
+     */
+    public void updateStyleProfile(Long projectId, String profile) {
+        Project project = projectMapper.selectById(projectId);
+        if (project == null) {
+            throw new BusinessException("项目不存在");
+        }
+        String trimmed = profile != null ? profile.trim() : null;
+        project.setStyleProfile(trimmed != null && !trimmed.isEmpty() ? trimmed : null);
+        project.setStyleAnalyzedAt(trimmed != null && !trimmed.isEmpty() ? LocalDateTime.now() : null);
+        projectMapper.updateById(project);
+        log.info("项目[{}]代码风格画像已手动更新", projectId);
+    }
+
     private void clearOldReviewResults(Long projectId) {
         // 删除旧问题
         List<ReviewIssue> oldIssues = reviewIssueMapper.findByProjectId(projectId);
