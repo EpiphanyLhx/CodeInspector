@@ -14,5 +14,7 @@ public class CreateProjectDTO {
     private String sourceType;  // UPLOAD / GIT
     private String gitUrl;
     private String gitBranch;
+    private String gitUsername; // 私有仓库用户名(可选)
+    private String gitToken;    // 私有仓库访问令牌(可选, 后端AES加密存储)
     private String language;
 }

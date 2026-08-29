@@ -16,6 +16,10 @@
           <el-icon><UserFilled /></el-icon>
           <span>团队管理</span>
         </el-menu-item>
+        <el-menu-item index="/team-tasks">
+          <el-icon><Tickets /></el-icon>
+          <span>审查任务</span>
+        </el-menu-item>
         <el-menu-item index="/stats">
           <el-icon><DataAnalysis /></el-icon>
           <span>统计分析</span>

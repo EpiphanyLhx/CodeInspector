@@ -39,6 +39,12 @@ public class ReviewTaskConsumer {
             // 手动ACK确认消费成功
             channel.basicAck(deliveryTag, false);
             log.info("审查任务[{}]处理完成", task.getId());
+            // 事务已提交，在事务外部检查完成状态并生成报告（与 @Async 降级模式保持一致）
+            try {
+                reviewService.afterTaskComplete(task.getProjectId());
+            } catch (Exception e) {
+                log.error("检查项目[{}]完成状态失败: {}", task.getProjectId(), e.getMessage());
+            }
         } catch (Exception e) {
             log.error("审查任务[{}]处理失败: ", task.getId(), e);
             try {
@@ -63,6 +69,12 @@ public class ReviewTaskConsumer {
             task.setErrorMsg("审查超时，任务自动失败");
             reviewService.processChunkReview(task);
             channel.basicAck(deliveryTag, false);
+            // 检查项目审查是否全部完成
+            try {
+                reviewService.afterTaskComplete(task.getProjectId());
+            } catch (Exception e) {
+                log.error("检查项目[{}]完成状态失败: {}", task.getProjectId(), e.getMessage());
+            }
         } catch (Exception e) {
             log.error("死信处理异常: ", e);
         }

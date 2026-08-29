@@ -77,6 +77,14 @@ export const getMemberProjects = (teamId, userId) =>
 export const getMemberReviews = (teamId, userId) =>
   http.get(`/teams/${teamId}/members/${userId}/reviews`)
 
+// ================ 团队审查任务 ================
+export const createTeamTask = (data) => http.post('/team-tasks', data)
+export const getTeamTasks = (scope = 'all') =>
+  http.get('/team-tasks', { params: { scope } })
+export const getTeamTaskDetail = (taskId) => http.get(`/team-tasks/${taskId}`)
+export const submitTeamTask = (taskId) => http.post(`/team-tasks/${taskId}/submit`)
+export const deleteTeamTask = (taskId) => http.delete(`/team-tasks/${taskId}`)
+
 // ================ 项目 ================
 export const createProject = (data) => http.post('/projects', data)
 export const getProjectList = (page = 1, size = 10) =>
@@ -91,6 +99,8 @@ export const uploadProjectCode = (projectId, file) => {
 }
 export const pullFromGit = (projectId) =>
   http.post(`/projects/${projectId}/git-pull`)
+export const updateProjectGitCredentials = (projectId, data) =>
+  http.put(`/projects/${projectId}/git-credentials`, data)
 export const deleteProject = (projectId) =>
   http.delete(`/projects/${projectId}`)
 export const deleteProjectFile = (projectId, fileId) =>

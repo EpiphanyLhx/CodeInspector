@@ -8,6 +8,8 @@ public class TeamProjectVO {
     private Long id;
     private String name;
     private String description;
+    private String sourceType;  // UPLOAD / GIT
+    private String gitBranch;
     private String language;
     private String reviewStatus;
     private Long creatorId;

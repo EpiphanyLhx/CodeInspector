@@ -38,6 +38,18 @@ const routes = [
         meta: { title: '团队管理', icon: 'UserFilled' }
       },
       {
+        path: 'team-tasks',
+        name: 'TeamReviewTasks',
+        component: () => import('@/views/TeamReviewTasks.vue'),
+        meta: { title: '审查任务', icon: 'Tickets' }
+      },
+      {
+        path: 'team-tasks/:id',
+        name: 'TeamReviewTaskDetail',
+        component: () => import('@/views/TeamReviewTaskDetail.vue'),
+        meta: { title: '任务详情' }
+      },
+      {
         path: 'stats',
         name: 'Stats',
         component: () => import('@/views/Stats.vue'),

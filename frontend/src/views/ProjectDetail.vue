@@ -15,6 +15,9 @@
           @click="handleGitPull" :loading="pulling">
           <el-icon><Download /></el-icon> 拉取代码
         </el-button>
+        <el-button v-if="project.sourceType === 'GIT'" @click="openCredDialog">
+          <el-icon><Key /></el-icon> Git 凭据
+        </el-button>
         <el-divider direction="vertical" />
         <el-tooltip placement="top"
           content="开启后，AI 会先分析你项目的代码风格（缩进、命名、注释、日志方式等），让修复建议和修复后代码遵循你的风格，且不把你既有的风格习惯报为问题">
@@ -216,6 +219,28 @@
       </template>
     </template>
   </el-dialog>
+
+  <!-- Git 私有仓库凭据对话框 -->
+  <el-dialog v-model="showCredDialog" title="Git 私有仓库凭据" width="520px">
+    <el-alert type="info" :closable="false" show-icon style="margin-bottom:16px;"
+      title="凭据仅用于服务端 clone/pull 私有仓库，访问令牌将加密存储，接口不返回明文。" />
+    <el-form label-width="90px">
+      <el-form-item label="Git 用户名">
+        <el-input v-model="credForm.gitUsername" placeholder="例如：你的用户名 / oauth2" />
+      </el-form-item>
+      <el-form-item label="访问令牌">
+        <el-input v-model="credForm.gitToken" type="password" show-password
+          :placeholder="project.gitTokenConfigured ? '已配置，留空则不修改；输入新值覆盖' : '请输入访问令牌'" />
+      </el-form-item>
+    </el-form>
+    <div v-if="project.gitTokenConfigured" style="margin-bottom:12px;">
+      <el-checkbox v-model="credForm.clearToken">清除已保存的令牌</el-checkbox>
+    </div>
+    <template #footer>
+      <el-button @click="showCredDialog = false">取消</el-button>
+      <el-button type="primary" :loading="credSaving" @click="saveCred">保存</el-button>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup>
@@ -224,7 +249,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { getProjectDetail, getProjectFiles, getFileContent, getFileIssues,
   getProjectIssues,
   uploadProjectCode,
-  pullFromGit, startReview, getReviewProgress, deleteProjectFile,
+  pullFromGit, updateProjectGitCredentials,
+  startReview, getReviewProgress, deleteProjectFile,
   analyzeProjectStyle, getProjectStyle, updateProjectStyle } from '@/api'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import CodeEditor from '@/components/CodeEditor.vue'
@@ -238,6 +264,36 @@ const pulling = ref(false)
 const starting = ref(false)
 const progress = ref({})
 let progressTimer = null
+
+// Git 私有仓库凭据
+const showCredDialog = ref(false)
+const credSaving = ref(false)
+const credForm = reactive({ gitUsername: '', gitToken: '', clearToken: false })
+
+const openCredDialog = () => {
+  credForm.gitUsername = project.value.gitUsername || ''
+  credForm.gitToken = ''
+  credForm.clearToken = false
+  showCredDialog.value = true
+}
+
+const saveCred = async () => {
+  credSaving.value = true
+  try {
+    const payload = { gitUsername: credForm.gitUsername }
+    if (credForm.clearToken) {
+      payload.gitToken = ''
+    } else if (credForm.gitToken) {
+      payload.gitToken = credForm.gitToken
+    }
+    const res = await updateProjectGitCredentials(projectId.value, payload)
+    project.value.gitUsername = res.data.gitUsername
+    project.value.gitTokenConfigured = res.data.gitTokenConfigured
+    ElMessage.success('Git 凭据已保存')
+    showCredDialog.value = false
+  } catch { /* ignore */ }
+  credSaving.value = false
+}
 
 // 代码风格偏好
 const styleEnabled = ref(false)

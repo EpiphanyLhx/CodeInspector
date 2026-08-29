@@ -54,6 +54,8 @@ CREATE TABLE IF NOT EXISTS `project` (
     `source_type` VARCHAR(32) NOT NULL COMMENT '来源: UPLOAD/GIT',
     `git_url` VARCHAR(1024) COMMENT 'Git仓库URL',
     `git_branch` VARCHAR(128) DEFAULT 'main' COMMENT 'Git分支',
+    `git_username` VARCHAR(128) COMMENT 'Git用户名(私有仓库认证)',
+    `git_token_encrypted` TEXT COMMENT 'Git访问令牌(AES加密, 私有仓库认证)',
     `repo_path` VARCHAR(512) COMMENT '本地仓库路径',
     `language` VARCHAR(64) DEFAULT 'java' COMMENT '主要语言',
     `total_files` INT DEFAULT 0 COMMENT '文件总数',
@@ -212,6 +214,53 @@ ALTER TABLE `project` MODIFY COLUMN `team_id` BIGINT NULL DEFAULT NULL COMMENT '
 -- 兼容已存在的数据库: 为 team 表补充邀请码字段(已存在则忽略报错)
 ALTER TABLE `team` ADD COLUMN `invite_code` VARCHAR(16) NULL COMMENT '团队邀请码' AFTER `owner_id`;
 ALTER TABLE `team` ADD INDEX `idx_invite_code` (`invite_code`);
+
+-- 兼容已存在的数据库: 为 project 表补充 Git 私有仓库凭据字段(已存在则忽略报错)
+ALTER TABLE `project` ADD COLUMN `git_username` VARCHAR(128) COMMENT 'Git用户名(私有仓库认证)' AFTER `git_branch`;
+ALTER TABLE `project` ADD COLUMN `git_token_encrypted` TEXT COMMENT 'Git访问令牌(AES加密, 私有仓库认证)' AFTER `git_username`;
+
+-- 兼容已存在的数据库: 为 team_review_task 补充 stage 子阶段字段(已存在则忽略报错)
+ALTER TABLE `team_review_task` ADD COLUMN `stage` VARCHAR(32) COMMENT 'REVIEWING时的子阶段: PULLING/SCANNING/AI_REVIEWING' AFTER `status`;
+
+-- ====================================================================
+-- 团队审查任务
+-- ====================================================================
+
+-- 团队审查任务表
+CREATE TABLE IF NOT EXISTS `team_review_task` (
+    `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+    `team_id` BIGINT NOT NULL COMMENT '团队ID',
+    `project_id` BIGINT NOT NULL COMMENT '项目ID(必须为GIT类型)',
+    `title` VARCHAR(256) NOT NULL COMMENT '任务标题',
+    `description` VARCHAR(2048) COMMENT '任务描述',
+    `review_branch` VARCHAR(128) NOT NULL COMMENT '审查分支',
+    `deadline` DATETIME NULL COMMENT '截止时间',
+    `creator_id` BIGINT NOT NULL COMMENT '发布者ID',
+    `status` VARCHAR(32) NOT NULL DEFAULT 'PENDING' COMMENT '状态: PENDING/REVIEWING/COMPLETED/FAILED',
+    `stage` VARCHAR(32) COMMENT 'REVIEWING时的子阶段: PULLING(拉取代码)/SCANNING(扫描)/AI_REVIEWING(AI审查)',
+    `last_commit_hash` VARCHAR(64) COMMENT '最后提交的commit hash',
+    `last_submitter_id` BIGINT COMMENT '最后提交人ID',
+    `last_submit_time` DATETIME COMMENT '最后提交时间',
+    `error_msg` VARCHAR(1024) COMMENT '失败原因',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `deleted` TINYINT NOT NULL DEFAULT 0,
+    INDEX `idx_team` (`team_id`),
+    INDEX `idx_project` (`project_id`),
+    INDEX `idx_creator` (`creator_id`),
+    INDEX `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='团队审查任务表';
+
+-- 团队审查任务指派成员表
+CREATE TABLE IF NOT EXISTS `team_review_task_assignee` (
+    `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+    `task_id` BIGINT NOT NULL COMMENT '任务ID',
+    `user_id` BIGINT NOT NULL COMMENT '被指派成员ID',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY `uk_task_user` (`task_id`, `user_id`),
+    INDEX `idx_task` (`task_id`),
+    INDEX `idx_user` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='团队审查任务指派成员表';
 
 -- 插入默认管理员 (密码: admin123, BCrypt加密)
 INSERT INTO `user` (`username`, `password`, `email`, `role`) VALUES

@@ -46,6 +46,13 @@ public class ReviewService {
     @Autowired(required = false)
     private ReviewTaskProducer reviewTaskProducer;
 
+    /**
+     * 审查完成监听器：项目审查进入终态(COMPLETED/FAILED)时回调。
+     * 用于团队审查任务等需要感知审查完成的扩展功能，不改动 AI 审查核心逻辑。
+     */
+    @Autowired(required = false)
+    private List<ReviewCompletionListener> completionListeners = new ArrayList<>();
+
     private final ReviewTaskExecutor reviewTaskExecutor;
 
     public ReviewService(ReviewTaskMapper reviewTaskMapper, ReviewIssueMapper reviewIssueMapper,
@@ -76,6 +83,14 @@ public class ReviewService {
     private static final Set<String> VALID_SEVERITIES = Set.of("CRITICAL", "MAJOR", "MINOR", "INFO");
     private static final Set<String> VALID_CATEGORIES =
             Set.of("SECURITY", "BUG", "CODE_STYLE", "PERFORMANCE", "BEST_PRACTICE");
+
+    /**
+     * 审查完成监听器：项目审查进入终态时回调。
+     * 实现类注册为 Spring Bean 即可被自动注入，finalStatus 为 COMPLETED 或 FAILED。
+     */
+    public interface ReviewCompletionListener {
+        void onReviewComplete(Long projectId, String finalStatus);
+    }
 
     /**
      * 启动项目审查 - 创建所有切片审查任务并发送到RabbitMQ
@@ -236,6 +251,23 @@ public class ReviewService {
     }
 
     /**
+     * 通知所有审查完成监听器（单个监听器异常不影响其他监听器）
+     */
+    private void notifyCompletionListeners(Long projectId, String finalStatus) {
+        if (completionListeners == null || completionListeners.isEmpty()) {
+            return;
+        }
+        for (ReviewCompletionListener listener : completionListeners) {
+            try {
+                listener.onReviewComplete(projectId, finalStatus);
+            } catch (Exception e) {
+                log.error("审查完成监听器[{}]执行失败: project={}",
+                        listener.getClass().getSimpleName(), projectId, e);
+            }
+        }
+    }
+
+    /**
      * 保存审查发现的问题
      */
     private void saveIssue(ReviewTask task, CodeChunk chunk, CodeFile codeFile, JSONObject issueJson) {
@@ -316,6 +348,7 @@ public class ReviewService {
             log.info("项目[{}]审查进度: {}/{} 完成, {} 失败", projectId, completed, total, failed);
 
             if (total > 0 && (completed + failed) >= total) {
+                String finalStatus;
                 // 全部失败则标记为失败状态
                 if (completed == 0 && failed > 0) {
                     Project project = projectMapper.selectById(projectId);
@@ -324,10 +357,12 @@ public class ReviewService {
                         projectMapper.updateById(project);
                         log.warn("项目[{}]所有审查任务均失败，状态更新为FAILED", projectId);
                     }
+                    finalStatus = "FAILED";
                 } else {
                     try {
                         generateReport(projectId);
                         log.info("项目[{}]审查全部完成，报告已生成", projectId);
+                        finalStatus = "COMPLETED";
                     } catch (Exception e) {
                         log.error("项目[{}]报告生成失败: ", projectId, e);
                         // 报告生成失败时标记项目为失败
@@ -336,11 +371,14 @@ public class ReviewService {
                             project.setReviewStatus("FAILED");
                             projectMapper.updateById(project);
                         }
+                        finalStatus = "FAILED";
                     }
                 }
                 // 无论报告是否成功生成，都释放审查锁（所有任务已结束）
                 redisTemplate.delete(REVIEW_LOCK_KEY + projectId);
                 redisTemplate.delete(REVIEW_PROGRESS_KEY + projectId);
+                // 通知扩展监听器（团队审查任务等）
+                notifyCompletionListeners(projectId, finalStatus);
             }
         } finally {
             redisTemplate.delete(genLockKey);
