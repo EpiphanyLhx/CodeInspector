@@ -13,6 +13,8 @@ public class ProjectVO {
     private String sourceType;
     private String gitUrl;
     private String gitBranch;
+    private String gitUsername;        // Git用户名(私有仓库认证), 明文返回非敏感
+    private Boolean gitTokenConfigured; // 是否已配置访问令牌(不返回明文)
     private String language;
     private Integer totalFiles;
     private Long totalLines;

@@ -3,6 +3,7 @@ package com.codeinspector.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.codeinspector.common.Result;
 import com.codeinspector.model.dto.CreateProjectDTO;
+import com.codeinspector.model.dto.UpdateGitCredentialsDTO;
 import com.codeinspector.model.entity.Project;
 import com.codeinspector.model.entity.User;
 import com.codeinspector.model.vo.ProjectVO;
@@ -52,6 +53,18 @@ public class ProjectController {
     public Result<Project> pullFromGit(@PathVariable Long projectId,
                                         @AuthenticationPrincipal User user) {
         return Result.success(projectService.pullFromGit(projectId, user.getId()));
+    }
+
+    /**
+     * 更新项目 Git 私有仓库凭据（用户名/访问令牌，令牌 AES 加密存储，接口不返回明文）
+     */
+    @PutMapping("/{projectId}/git-credentials")
+    public Result<ProjectVO> updateGitCredentials(@PathVariable Long projectId,
+                                                   @RequestBody UpdateGitCredentialsDTO dto,
+                                                   @AuthenticationPrincipal User user) {
+        projectService.updateGitCredentials(
+                projectId, dto.getGitUsername(), dto.getGitToken(), user.getId());
+        return Result.success(projectService.getProjectDetail(projectId));
     }
 
     @DeleteMapping("/{projectId}")

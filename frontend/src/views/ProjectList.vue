@@ -82,6 +82,15 @@
         <el-form-item v-if="createForm.sourceType === 'GIT'" label="分支">
           <el-input v-model="createForm.gitBranch" placeholder="main" />
         </el-form-item>
+        <template v-if="createForm.sourceType === 'GIT'">
+          <el-form-item label="Git 用户名">
+            <el-input v-model="createForm.gitUsername" placeholder="私有仓库用户名（公开仓库可不填）" />
+          </el-form-item>
+          <el-form-item label="访问令牌">
+            <el-input v-model="createForm.gitToken" type="password" show-password
+              placeholder="私有仓库访问令牌（公开仓库可不填，加密存储）" />
+          </el-form-item>
+        </template>
         <el-form-item label="主要语言">
           <el-select v-model="createForm.language" style="width:100%">
             <el-option label="Java" value="java" />
@@ -135,7 +144,8 @@ const creating = ref(false)
 const teams = ref([])
 const createForm = reactive({
   teamId: null, name: '', description: '',
-  sourceType: 'UPLOAD', gitUrl: '', gitBranch: 'main', language: 'java'
+  sourceType: 'UPLOAD', gitUrl: '', gitBranch: 'main', language: 'java',
+  gitUsername: '', gitToken: ''
 })
 
 const loadTeams = async () => {
@@ -155,7 +165,10 @@ const handleCreate = async () => {
     await createProject(createForm)
     ElMessage.success('项目创建成功')
     showCreateDialog.value = false
-    Object.assign(createForm, { name: '', description: '', gitUrl: '' })
+    Object.assign(createForm, {
+      name: '', description: '', gitUrl: '',
+      gitUsername: '', gitToken: ''
+    })
     loadProjects()
   } catch { /* ignore */ }
   creating.value = false

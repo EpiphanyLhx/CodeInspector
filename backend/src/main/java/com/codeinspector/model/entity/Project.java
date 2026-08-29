@@ -15,6 +15,8 @@ public class Project {
     private String sourceType;  // UPLOAD / GIT
     private String gitUrl;
     private String gitBranch;
+    private String gitUsername;       // Git用户名(私有仓库认证)
+    private String gitTokenEncrypted; // Git访问令牌(AES加密)
     private String repoPath;
     private String language;
     private Integer totalFiles;

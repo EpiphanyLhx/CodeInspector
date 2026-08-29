@@ -40,6 +40,7 @@ public class ProjectService {
     private final CodeAnalysisService codeAnalysisService;
     private final ReviewService reviewService;
     private final GitService gitService;
+    private final com.codeinspector.common.AESUtils aesUtils;
 
     @Value("${file.upload-dir:/tmp/code-inspector/uploads}")
     private String uploadDir;
@@ -67,6 +68,13 @@ public class ProjectService {
         project.setGitUrl(dto.getGitUrl());
         project.setGitBranch(dto.getGitBranch() != null ? dto.getGitBranch() : "main");
         project.setLanguage(dto.getLanguage() != null ? dto.getLanguage() : "java");
+        // 私有仓库凭据（token AES 加密存储）
+        if (dto.getGitUsername() != null && !dto.getGitUsername().isBlank()) {
+            project.setGitUsername(dto.getGitUsername().trim());
+        }
+        if (dto.getGitToken() != null && !dto.getGitToken().isBlank()) {
+            project.setGitTokenEncrypted(aesUtils.encrypt(dto.getGitToken()));
+        }
         project.setReviewStatus("PENDING");
         project.setCreatorId(userId);
         projectMapper.insert(project);
@@ -136,9 +144,15 @@ public class ProjectService {
             throw new BusinessException("项目未配置Git URL");
         }
 
-        // 克隆仓库
+        // 克隆仓库（支持私有仓库凭据）
+        String gitUsername = project.getGitUsername();
+        String gitToken = null;
+        if (project.getGitTokenEncrypted() != null && !project.getGitTokenEncrypted().isBlank()) {
+            gitToken = aesUtils.decrypt(project.getGitTokenEncrypted());
+        }
         String repoPath = gitService.cloneRepository(
-                project.getGitUrl(), project.getGitBranch(), project.getName());
+                project.getGitUrl(), project.getGitBranch(), project.getName(),
+                gitUsername, gitToken);
 
         // 分析代码文件
         List<CodeFile> codeFiles = codeAnalysisService.analyzeProjectCode(projectId, repoPath);
@@ -161,6 +175,40 @@ public class ProjectService {
         // 拉取新代码后清除旧审查数据和锁
         reviewService.resetReviewState(projectId);
 
+        return project;
+    }
+
+    /**
+     * 更新项目 Git 私有仓库凭据（仅项目创建者或团队管理员）
+     * gitUsername 为 null 不修改；gitToken 为 null 不修改，为空串清除，非空则加密覆盖
+     */
+    @Transactional
+    public Project updateGitCredentials(Long projectId, String gitUsername, String gitToken, Long userId) {
+        Project project = projectMapper.selectById(projectId);
+        if (project == null) {
+            throw new BusinessException("项目不存在");
+        }
+        // 权限：创建者 或 团队管理员
+        boolean isCreator = project.getCreatorId().equals(userId);
+        boolean isTeamAdmin = false;
+        if (project.getTeamId() != null) {
+            TeamMember m = teamMemberMapper.selectOne(new LambdaQueryWrapper<TeamMember>()
+                    .eq(TeamMember::getTeamId, project.getTeamId())
+                    .eq(TeamMember::getUserId, userId));
+            isTeamAdmin = m != null && ("LEADER".equals(m.getRole()) || "ADMIN".equals(m.getRole()));
+        }
+        if (!isCreator && !isTeamAdmin) {
+            throw new BusinessException("只有项目创建者或团队管理员可以修改 Git 凭据");
+        }
+
+        if (gitUsername != null) {
+            project.setGitUsername(gitUsername.isBlank() ? null : gitUsername.trim());
+        }
+        if (gitToken != null) {
+            project.setGitTokenEncrypted(gitToken.isBlank() ? null : aesUtils.encrypt(gitToken));
+        }
+        projectMapper.updateById(project);
+        log.info("项目[{}] Git 凭据已更新", projectId);
         return project;
     }
 
@@ -266,6 +314,9 @@ public class ProjectService {
         vo.setSourceType(project.getSourceType());
         vo.setGitUrl(project.getGitUrl());
         vo.setGitBranch(project.getGitBranch());
+        vo.setGitUsername(project.getGitUsername());
+        vo.setGitTokenConfigured(project.getGitTokenEncrypted() != null
+                && !project.getGitTokenEncrypted().isBlank());
         vo.setLanguage(project.getLanguage());
         vo.setTotalFiles(project.getTotalFiles());
         vo.setTotalLines(project.getTotalLines());

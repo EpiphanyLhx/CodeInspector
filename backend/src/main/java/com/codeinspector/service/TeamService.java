@@ -515,6 +515,8 @@ public class TeamService {
             vo.setId(p.getId());
             vo.setName(p.getName());
             vo.setDescription(p.getDescription());
+            vo.setSourceType(p.getSourceType());
+            vo.setGitBranch(p.getGitBranch());
             vo.setLanguage(p.getLanguage());
             vo.setReviewStatus(p.getReviewStatus());
             vo.setCreatorId(p.getCreatorId());
