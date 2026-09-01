@@ -78,13 +78,16 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import * as echarts from 'echarts'
 import StatCards from '@/components/StatCards.vue'
 import SeverityPie from '@/components/charts/SeverityPie.vue'
 import CategoryBar from '@/components/charts/CategoryBar.vue'
 import TrendLine from '@/components/charts/TrendLine.vue'
 import { useStats } from '@/composables/useStats'
+import { useTheme } from '@/composables/useTheme'
+
+const { isDark } = useTheme()
 
 const { statCards, reviewedProjects, loadGlobalStats, loadProjectStats, loadTrendData, loadProjects } = useStats()
 const selectedProjectId = ref(null)
@@ -130,7 +133,8 @@ const renderEmptyExtraChart = () => {
   extraChart?.dispose()
   extraChart = echarts.init(extraChartRef.value)
   extraChart.setOption({
-    title: { text: '请选择具体项目查看详情', left: 'center', top: 'center', textStyle: { fontSize: 14, color: '#909399' } }
+    backgroundColor: 'transparent',
+    title: { text: '请选择具体项目查看详情', left: 'center', top: 'center', textStyle: { fontSize: 14, color: isDark.value ? '#6e7681' : '#909399' } }
   })
 }
 
@@ -146,10 +150,25 @@ const renderFileHeatmap = (issues) => {
   issues.forEach(i => { fileMap[i.filePath] = (fileMap[i.filePath] || 0) + 1 })
   const entries = Object.entries(fileMap).sort((a, b) => b[1] - a[1]).slice(0, 10)
   extraChart.setOption({
-    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger: 'axis', axisPointer: { type: 'shadow' },
+      backgroundColor: isDark.value ? 'rgba(22,27,34,0.95)' : 'rgba(255,255,255,0.95)',
+      borderColor: isDark.value ? '#30363d' : '#e4e7ed',
+      textStyle: { color: isDark.value ? '#c9d1d9' : '#303133' }
+    },
     grid: { left: 4, right: 10, top: 10, bottom: 20, containLabel: true },
-    xAxis: { type: 'value' },
-    yAxis: { type: 'category', data: entries.map(e => e[0].split('/').pop()), axisLabel: { fontSize: 10 } },
+    xAxis: {
+      type: 'value',
+      axisLine: { lineStyle: { color: isDark.value ? '#30363d' : '#e4e7ed' } },
+      axisLabel: { color: isDark.value ? '#8b949e' : '#606266' },
+      splitLine: { lineStyle: { color: isDark.value ? 'rgba(48,54,61,0.6)' : '#e4e7ed' } }
+    },
+    yAxis: {
+      type: 'category', data: entries.map(e => e[0].split('/').pop()),
+      axisLine: { lineStyle: { color: isDark.value ? '#30363d' : '#e4e7ed' } },
+      axisLabel: { fontSize: 10, color: isDark.value ? '#8b949e' : '#606266' }
+    },
     series: [{
       type: 'bar', data: entries.map(e => e[1]),
       itemStyle: { borderRadius: [0, 6, 6, 0],
@@ -159,6 +178,18 @@ const renderFileHeatmap = (issues) => {
     }]
   })
 }
+
+/* 主题联动：切换时重新渲染 extraChart */
+watch(isDark, () => {
+  nextTick(() => {
+    if (selectedProjectId.value && report.value) {
+      // 有报告数据时重新渲染热力图（issues 数据从 report 无法获取，用空数据降级）
+      renderEmptyExtraChart()
+    } else {
+      renderEmptyExtraChart()
+    }
+  })
+})
 
 onMounted(async () => {
   pageLoading.value = true
@@ -194,37 +225,45 @@ onBeforeUnmount(() => {
   margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
 }
 .toolbar-left { display: flex; align-items: baseline; gap: 12px; }
-.toolbar-left h2 { font-size: 22px; font-weight: 700; color: #303133; margin: 0; }
-.subtitle { font-size: 13px; color: #909399; }
+.toolbar-left h2 { font-size: 22px; font-weight: 700; color: var(--text-regular); margin: 0; }
+.subtitle { font-size: 13px; color: var(--text-placeholder); }
 
 /* KPI卡片行 */
 .kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; }
 .kpi-card {
-  background: #fff; border-radius: 10px; padding: 22px 20px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.06); text-align: center;
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--border-color);
+  border-radius: 10px; padding: 22px 20px;
+  box-shadow: var(--shadow-card); text-align: center;
   transition: transform 0.15s;
 }
 .kpi-card:hover { transform: translateY(-2px); }
 .kpi-value { font-size: 32px; font-weight: 800; line-height: 1.2; }
-.kpi-label { font-size: 13px; color: #909399; margin-top: 6px; }
+.kpi-label { font-size: 13px; color: var(--text-placeholder); margin-top: 6px; }
 
 /* 图表行 */
 .chart-row { margin-bottom: 0; }
 
 /* 统一面板 */
 .panel {
-  background: #fff; border-radius: 10px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  box-shadow: var(--shadow-card);
   margin-bottom: 16px; overflow: hidden;
 }
 .panel-header {
   padding: 14px 20px; font-size: 15px; font-weight: 600;
-  color: #303133; border-bottom: 1px solid #f0f2f5;
+  color: var(--text-regular); border-bottom: 1px solid var(--border-light);
 }
 .panel-body { padding: 16px 20px; }
 
 /* 报告 */
-.report-text { font-size: 14px; color: #606266; line-height: 1.8; margin-bottom: 16px; }
+.report-text { font-size: 14px; color: var(--text-secondary); line-height: 1.8; margin-bottom: 16px; }
 .report-table { margin-top: 8px; }
 
 /* 额外图表 */

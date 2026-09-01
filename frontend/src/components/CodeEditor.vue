@@ -10,6 +10,7 @@ import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
 import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker'
 import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker'
 import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
+import { useTheme } from '@/composables/useTheme'
 
 // 配置Monaco Editor Web Workers
 self.MonacoEnvironment = {
@@ -32,6 +33,8 @@ const props = defineProps({
 
 const emit = defineEmits(['scrollToLine', 'ready'])
 
+const { isDark } = useTheme()
+
 const editorContainer = ref(null)
 let editor = null
 let decorations = []
@@ -45,7 +48,7 @@ onMounted(async () => {
     value: props.content,
     language: props.language,
     readOnly: props.readOnly,
-    theme: props.theme,
+    theme: isDark.value ? 'vs-dark' : 'vs',
     fontSize: 13,
     lineNumbers: 'on',
     minimap: { enabled: true },
@@ -73,6 +76,13 @@ watch(() => props.content, (val) => {
 watch(() => props.issues, () => {
   renderIssueMarkers()
 }, { deep: true })
+
+/* 主题联动：全局主题切换时动态切换 Monaco 编辑器主题 */
+watch(isDark, (dark) => {
+  if (editor) {
+    monaco.editor.setTheme(dark ? 'vs-dark' : 'vs')
+  }
+})
 
 /**
  * 渲染问题标记 - 红点标记 + 高亮行

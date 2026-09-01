@@ -4,8 +4,10 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import * as echarts from 'echarts'
+import { useTheme } from '@/composables/useTheme'
 
 const props = defineProps({ data: { type: Object, default: () => ({}) } })
+const { isDark } = useTheme()
 const chartRef = ref(null)
 let chart = null
 
@@ -23,10 +25,26 @@ const render = () => {
   chart?.dispose()
   chart = echarts.init(chartRef.value)
   chart.setOption({
-    tooltip: { trigger: 'axis' },
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: isDark.value ? 'rgba(22,27,34,0.95)' : 'rgba(255,255,255,0.95)',
+      borderColor: isDark.value ? '#30363d' : '#e4e7ed',
+      textStyle: { color: isDark.value ? '#c9d1d9' : '#303133' }
+    },
     grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-    xAxis: { type: 'category', data: Object.keys(props.data).map(k => labels[k] || k) },
-    yAxis: { type: 'value', minInterval: 1 },
+    xAxis: {
+      type: 'category',
+      data: Object.keys(props.data).map(k => labels[k] || k),
+      axisLine: { lineStyle: { color: isDark.value ? '#30363d' : '#e4e7ed' } },
+      axisLabel: { color: isDark.value ? '#8b949e' : '#606266' }
+    },
+    yAxis: {
+      type: 'value', minInterval: 1,
+      axisLine: { lineStyle: { color: isDark.value ? '#30363d' : '#e4e7ed' } },
+      axisLabel: { color: isDark.value ? '#8b949e' : '#606266' },
+      splitLine: { lineStyle: { color: isDark.value ? 'rgba(48,54,61,0.6)' : '#e4e7ed' } }
+    },
     series: [{
       type: 'bar', data: Object.values(props.data),
       itemStyle: { borderRadius: [6, 6, 0, 0], color: (p) => colors[p.dataIndex % colors.length] }
@@ -36,6 +54,8 @@ const render = () => {
 }
 
 watch(() => props.data, () => nextTick(render), { deep: true })
+/* 主题联动：切换时销毁并以对应主题重新 init */
+watch(isDark, () => nextTick(render))
 onMounted(() => nextTick(render))
 
 onBeforeUnmount(() => {

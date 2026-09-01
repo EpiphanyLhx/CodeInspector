@@ -2,11 +2,17 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
+import 'element-plus/theme-chalk/dark/css-vars.css'
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import App from './App.vue'
 import router from './router'
+import { useTheme } from './composables/useTheme'
 import './styles/global.css'
+
+// 在应用挂载前初始化主题（配合 index.html 内联脚本杜绝 FOUC）
+const { initTheme } = useTheme()
+initTheme()
 
 const app = createApp(App)
 

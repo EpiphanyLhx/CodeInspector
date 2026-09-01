@@ -9,6 +9,23 @@
     html, body, #app { height: 100%; width: 100%; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
   </style>
+  <!--
+    FOUC 防闪烁内联脚本：
+    在 Vue 挂载、CSS 加载之前就确定 <html> 的 dark 类名，
+    避免页面先渲染浅色再跳变深色的闪烁问题。
+    与 useTheme.js 的 STORAGE_KEY 保持一致。
+  -->
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('codeinspector-theme');
+        var dark = saved
+          ? saved === 'dark'
+          : window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (dark) document.documentElement.classList.add('dark');
+      } catch (e) { /* localStorage 不可用时静默降级 */ }
+    })();
+  </script>
 </head>
 <body>
   <div id="app"></div>

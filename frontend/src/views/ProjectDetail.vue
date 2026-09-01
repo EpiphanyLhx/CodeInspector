@@ -575,17 +575,19 @@ onUnmounted(() => {
 
 <style scoped>
 .code-dialog-bar {
-  padding: 8px 16px; background: #f8f9fa; border-radius: 4px;
+  padding: 8px 16px; background: var(--bg-hover); border-radius: 4px;
   margin-bottom: 12px; font-size: 14px; font-weight: 500;
+  color: var(--text-regular);
 }
 .code-dialog-body { display: flex; height: 75vh; gap: 12px; }
-.dialog-editor { flex: 1; border: 1px solid #e4e7ed; border-radius: 4px; overflow: hidden; min-width: 0; }
+.dialog-editor { flex: 1; border: 1px solid var(--border-light); border-radius: 4px; overflow: hidden; min-width: 0; }
 
-.dialog-analysis { width: 380px; flex-shrink: 0; border: 1px solid #e4e7ed; border-radius: 4px; display: flex; flex-direction: column; overflow: hidden; background: #fff; }
+.dialog-analysis { width: 380px; flex-shrink: 0; border: 1px solid var(--border-light); border-radius: 4px; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-card); }
 .analysis-header {
   padding: 12px 16px; font-size: 15px; font-weight: 600;
-  border-bottom: 1px solid #f0f0f0; flex-shrink: 0;
+  border-bottom: 1px solid var(--border-light); flex-shrink: 0;
   display: flex; align-items: center; gap: 8px;
+  color: var(--text-regular);
 }
 .analysis-badge {
   background: #F56C6C; color: #fff; font-size: 12px; padding: 2px 8px; border-radius: 10px;
@@ -597,13 +599,13 @@ onUnmounted(() => {
 }
 .analysis-item {
   padding: 12px; margin-bottom: 10px; border-radius: 8px;
-  border-left: 4px solid #e4e7ed; cursor: pointer; transition: all 0.15s;
+  border-left: 4px solid var(--border-light); cursor: pointer; transition: all 0.15s;
 }
-.analysis-item:hover { background: #fafafa; }
-.analysis-item.sev-critical { border-left-color: #F56C6C; background: #fef0f0; }
-.analysis-item.sev-major { border-left-color: #E6A23C; background: #fdf6ec; }
-.analysis-item.sev-minor { border-left-color: #409EFF; background: #ecf5ff; }
-.analysis-item.sev-info { border-left-color: #909399; background: #f4f4f5; }
+.analysis-item:hover { background: var(--bg-hover); }
+.analysis-item.sev-critical { border-left-color: #F56C6C; background: var(--sev-critical-bg); }
+.analysis-item.sev-major { border-left-color: #E6A23C; background: var(--sev-major-bg); }
+.analysis-item.sev-minor { border-left-color: #409EFF; background: var(--sev-minor-bg); }
+.analysis-item.sev-info { border-left-color: #909399; background: var(--sev-info-bg); }
 
 .ai-line { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
 .ai-severity { padding: 2px 8px; border-radius: 4px; font-size: 11px; color: #fff; font-weight: 600; }
@@ -611,21 +613,21 @@ onUnmounted(() => {
 .ai-severity.major { background: #E6A23C; }
 .ai-severity.minor { background: #409EFF; }
 .ai-severity.info { background: #909399; }
-.ai-category { padding: 2px 6px; border-radius: 3px; font-size: 11px; background: #e8e8e8; color: #606266; }
-.ai-location { font-size: 11px; color: #909399; margin-left: auto; }
+.ai-category { padding: 2px 6px; border-radius: 3px; font-size: 11px; background: var(--category-tag-bg); color: var(--text-secondary); }
+.ai-location { font-size: 11px; color: var(--text-placeholder); margin-left: auto; }
 
-.ai-title { font-size: 13px; font-weight: 600; color: #303133; margin-bottom: 8px; }
+.ai-title { font-size: 13px; font-weight: 600; color: var(--text-regular); margin-bottom: 8px; }
 
 .ai-section { margin-top: 8px; }
-.ai-section-title { font-size: 12px; font-weight: 600; color: #909399; margin-bottom: 4px; }
-.ai-section-content { font-size: 12px; color: #606266; line-height: 1.6; }
+.ai-section-title { font-size: 12px; font-weight: 600; color: var(--text-placeholder); margin-bottom: 4px; }
+.ai-section-content { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
 .ai-section-content.suggest { color: #67C23A; }
 .ai-code { background: #282c34; color: #abb2bf; padding: 8px 12px; border-radius: 4px; font-size: 12px; line-height: 1.5; overflow-x: auto; max-height: 100px; margin: 4px 0; }
-.ai-code.fixed { background: #f0f9eb; color: #67C23A; }
+.ai-code.fixed { background: rgba(103,194,58,0.1); color: #67C23A; }
 
 .style-profile-text {
-  background: #f8f9fa; border: 1px solid #e4e7ed; border-radius: 6px;
-  padding: 14px 16px; font-size: 13px; line-height: 1.8; color: #303133;
+  background: var(--bg-hover); border: 1px solid var(--border-light); border-radius: 6px;
+  padding: 14px 16px; font-size: 13px; line-height: 1.8; color: var(--text-regular);
   white-space: pre-wrap; word-break: break-word; margin: 0;
   font-family: "SF Mono", "Menlo", "Consolas", monospace;
 }

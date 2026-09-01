@@ -1,25 +1,120 @@
+/* ============================================================
+   CodeInspector — 双主题设计令牌 (Light / Dark)
+   激活方式：<html class="dark"> 切换 Element Plus 内置暗黑主题
+   ============================================================ */
+
+/* ---------- 浅色模式令牌 (GitHub Light 风格) ---------- */
 :root {
+  /* 品牌语义色 (双模式共用) */
   --primary-color: #409EFF;
   --success-color: #67C23A;
   --warning-color: #E6A23C;
   --danger-color: #F56C6C;
   --info-color: #909399;
-  --bg-color: #f5f7fa;
+
+  /* 页面 & 布局 */
+  --bg-color: #f5f7fa;           /* 页面底色 */
+  --bg-page: #ffffff;             /* 纯净白底 */
+  --bg-card: #ffffff;             /* 卡片面板 */
+  --bg-sidebar: #ffffff;          /* 侧边栏 */
+  --bg-hover: #f5f7fa;            /* 悬浮态 */
+  --bg-input: #ffffff;
+
+  /* 边框 — 极淡描边 */
+  --border-color: #d0d7de;
+  --border-light: #e4e7ed;
+  --border-sidebar: #d0d7de;
+
+  /* 文本 — 清晰锐利 */
+  --text-primary: #24292f;
+  --text-regular: #303133;
+  --text-secondary: #606266;
+  --text-placeholder: #909399;
+  --text-inverse: #ffffff;
+  --sidebar-text: #24292f;
+  --sidebar-text-secondary: rgba(36, 41, 47, 0.6);
+
+  /* 阴影 */
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-header: 0 1px 4px rgba(0, 0, 0, 0.08);
+  --shadow-auth: 0 20px 60px rgba(0, 0, 0, 0.3);
+
+  /* 严重程度标签底色 (浅色) */
+  --sev-critical-bg: #fef0f0;
+  --sev-major-bg: #fdf6ec;
+  --sev-minor-bg: #ecf5ff;
+  --sev-info-bg: #f4f4f5;
+  --category-tag-bg: #f0f2f5;
+
+  /* 图表文本色 */
+  --chart-axis-text: #606266;
+  --chart-split-line: #e4e7ed;
+  --chart-tooltip-bg: rgba(255, 255, 255, 0.95);
+  --chart-tooltip-border: #e4e7ed;
+
+  /* 尺寸常量 */
   --header-height: 60px;
   --sidebar-width: 220px;
 }
 
+/* ---------- 深色模式令牌 (GitHub Dark / Vercel 风格) ---------- */
+html.dark {
+  /* 页面 & 布局 — 沉浸式极客暗黑 */
+  --bg-color: #0d1117;
+  --bg-page: #0d1117;
+  --bg-card: rgba(22, 27, 34, 0.85);  /* 半透明 + backdrop-filter 毛玻璃 */
+  --bg-sidebar: #0d1117;
+  --bg-hover: #1f2937;
+  --bg-input: #161B22;
+
+  /* 边框 — 压暗 */
+  --border-color: #30363d;
+  --border-light: #30363d;
+  --border-sidebar: #30363d;
+
+  /* 文本 */
+  --text-primary: #c9d1d9;
+  --text-regular: #c9d1d9;
+  --text-secondary: #8b949e;
+  --text-placeholder: #6e7681;
+  --text-inverse: #0d1117;
+  --sidebar-text: #c9d1d9;
+  --sidebar-text-secondary: rgba(201, 209, 217, 0.6);
+
+  /* 阴影 — 深色更厚重 */
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-header: 0 1px 4px rgba(0, 0, 0, 0.4);
+  --shadow-auth: 0 20px 60px rgba(0, 0, 0, 0.5);
+
+  /* 严重程度标签底色 (深色降饱和) */
+  --sev-critical-bg: rgba(245, 108, 108, 0.15);
+  --sev-major-bg: rgba(230, 162, 60, 0.15);
+  --sev-minor-bg: rgba(64, 158, 255, 0.15);
+  --sev-info-bg: rgba(144, 147, 153, 0.15);
+  --category-tag-bg: rgba(48, 54, 61, 0.6);
+
+  /* 图表文本色 */
+  --chart-axis-text: #8b949e;
+  --chart-split-line: rgba(48, 54, 61, 0.6);
+  --chart-tooltip-bg: rgba(22, 27, 34, 0.95);
+  --chart-tooltip-border: #30363d;
+}
+
+/* ============================================================
+   全局平滑过渡 — 背景色 / 边框色无缝切换
+   ============================================================ */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 html, body {
   height: 100%;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
   background: var(--bg-color);
-  color: #303133;
+  color: var(--text-regular);
 }
 
 #app {
@@ -31,7 +126,9 @@ a {
   color: var(--primary-color);
 }
 
-/* 通用布局 */
+/* ============================================================
+   通用布局
+   ============================================================ */
 .app-layout {
   display: flex;
   height: 100vh;
@@ -40,8 +137,9 @@ a {
 
 .app-sidebar {
   width: var(--sidebar-width);
-  background: #1d1e2c;
-  color: #fff;
+  background: var(--bg-sidebar);
+  color: var(--sidebar-text);
+  border-right: 1px solid var(--border-sidebar);
   overflow-y: auto;
   flex-shrink: 0;
 }
@@ -55,8 +153,9 @@ a {
 
 .app-header {
   height: var(--header-height);
-  background: #fff;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  background: var(--bg-page);
+  border-bottom: 1px solid var(--border-light);
+  box-shadow: var(--shadow-header);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -71,7 +170,9 @@ a {
   padding: 24px;
 }
 
-/* 首页/登录页 */
+/* ============================================================
+   登录 / 认证页
+   ============================================================ */
 .auth-container {
   height: 100vh;
   display: flex;
@@ -82,68 +183,83 @@ a {
 
 .auth-card {
   width: 420px;
-  background: #fff;
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-radius: 16px;
   padding: 40px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  box-shadow: var(--shadow-auth);
+  border: 1px solid var(--border-color);
 }
 
 .auth-card h2 {
   text-align: center;
   font-size: 28px;
   margin-bottom: 8px;
-  color: #303133;
+  color: var(--text-regular);
 }
 
 .auth-card .subtitle {
   text-align: center;
-  color: #909399;
+  color: var(--text-placeholder);
   margin-bottom: 32px;
 }
 
-/* 仪表盘卡片 */
+/* ============================================================
+   仪表盘统计卡片
+   ============================================================ */
 .stat-card {
-  background: #fff;
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-radius: 8px;
   padding: 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-card);
 }
 
 .stat-card .stat-value {
   font-size: 32px;
   font-weight: 700;
-  color: #303133;
+  color: var(--text-regular);
 }
 
 .stat-card .stat-label {
   font-size: 14px;
-  color: #909399;
+  color: var(--text-placeholder);
   margin-top: 4px;
 }
 
-/* 图表容器 */
+/* ============================================================
+   图表容器
+   ============================================================ */
 .chart-container {
-  background: #fff;
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-radius: 8px;
   padding: 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-card);
 }
 
 .chart-container h3 {
   font-size: 16px;
   margin-bottom: 16px;
-  color: #303133;
+  color: var(--text-regular);
 }
 
-/* 代码编辑器容器 */
+/* ============================================================
+   代码编辑器容器
+   ============================================================ */
 .editor-container {
   height: 100%;
-  border: 1px solid #e4e7ed;
+  border: 1px solid var(--border-light);
   border-radius: 4px;
   overflow: hidden;
 }
 
-/* 问题标记行 */
+/* 问题标记行 (装订线圆点) */
 .issue-gutter-marker {
   width: 8px !important;
   height: 8px !important;
@@ -157,7 +273,9 @@ a {
 .issue-gutter-marker.minor { background: #409EFF; }
 .issue-gutter-marker.info { background: #909399; }
 
-/* 审查面板 */
+/* ============================================================
+   审查面板
+   ============================================================ */
 .review-panel {
   height: 100%;
   display: flex;
@@ -166,7 +284,7 @@ a {
 
 .review-file-list {
   flex-shrink: 0;
-  border-bottom: 1px solid #e4e7ed;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .review-editor-area {
@@ -183,8 +301,10 @@ a {
 .review-issue-list {
   width: 360px;
   overflow-y: auto;
-  border-left: 1px solid #e4e7ed;
-  background: #fff;
+  border-left: 1px solid var(--border-light);
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   padding: 16px;
   flex-shrink: 0;
 }
@@ -193,12 +313,12 @@ a {
   padding: 12px;
   margin-bottom: 8px;
   border-radius: 6px;
-  border-left: 4px solid #e4e7ed;
+  border-left: 4px solid var(--border-light);
   cursor: pointer;
   transition: background 0.2s;
 }
 
-.issue-item:hover { background: #f5f7fa; }
+.issue-item:hover { background: var(--bg-hover); }
 .issue-item.critical { border-left-color: #F56C6C; }
 .issue-item.major { border-left-color: #E6A23C; }
 .issue-item.minor { border-left-color: #409EFF; }
@@ -214,21 +334,24 @@ a {
 .issue-item .issue-title {
   font-size: 14px;
   font-weight: 600;
-  color: #303133;
+  color: var(--text-regular);
 }
 
 .issue-item .issue-file {
   font-size: 12px;
-  color: #909399;
+  color: var(--text-placeholder);
   margin-bottom: 4px;
 }
 
 .issue-item .issue-desc {
   font-size: 13px;
-  color: #606266;
+  color: var(--text-secondary);
   line-height: 1.5;
 }
 
+/* ============================================================
+   严重程度标签
+   ============================================================ */
 .severity-tag {
   display: inline-block;
   padding: 2px 8px;
@@ -237,28 +360,66 @@ a {
   font-weight: 600;
 }
 
-.severity-tag.critical { background: #fef0f0; color: #F56C6C; }
-.severity-tag.major { background: #fdf6ec; color: #E6A23C; }
-.severity-tag.minor { background: #ecf5ff; color: #409EFF; }
-.severity-tag.info { background: #f4f4f5; color: #909399; }
+.severity-tag.critical { background: var(--sev-critical-bg); color: #F56C6C; }
+.severity-tag.major { background: var(--sev-major-bg); color: #E6A23C; }
+.severity-tag.minor { background: var(--sev-minor-bg); color: #409EFF; }
+.severity-tag.info { background: var(--sev-info-bg); color: var(--text-placeholder); }
 
 .category-tag {
   display: inline-block;
   padding: 2px 6px;
   border-radius: 3px;
   font-size: 11px;
-  background: #f0f2f5;
-  color: #606266;
+  background: var(--category-tag-bg);
+  color: var(--text-secondary);
 }
 
-/* 进度条 */
+/* ============================================================
+   进度条
+   ============================================================ */
 .review-progress {
   padding: 16px 20px;
-  background: #fff;
-  border-bottom: 1px solid #e4e7ed;
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border-light);
 }
 
-/* 动画 */
+/* ============================================================
+   主题切换按钮 (Layout 顶部导航)
+   ============================================================ */
+.theme-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-card);
+  color: var(--text-regular);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.theme-toggle-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-color);
+  transform: translateY(-1px);
+}
+
+.theme-toggle-btn:active {
+  transform: translateY(0);
+}
+
+.theme-toggle-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ============================================================
+   动画
+   ============================================================ */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }

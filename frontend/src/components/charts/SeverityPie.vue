@@ -4,8 +4,10 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import * as echarts from 'echarts'
+import { useTheme } from '@/composables/useTheme'
 
 const props = defineProps({ data: { type: Object, default: () => ({}) } })
+const { isDark } = useTheme()
 const chartRef = ref(null)
 let chart = null
 
@@ -28,12 +30,22 @@ const render = () => {
     name: labels[k] || k, value: v, itemStyle: { color: colors[k] || '#909399' }
   }))
   chart.setOption({
-    tooltip: { trigger: 'item' },
-    legend: { orient: 'vertical', right: 0, top: 'center' },
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger: 'item',
+      backgroundColor: isDark.value ? 'rgba(22,27,34,0.95)' : 'rgba(255,255,255,0.95)',
+      borderColor: isDark.value ? '#30363d' : '#e4e7ed',
+      textStyle: { color: isDark.value ? '#c9d1d9' : '#303133' }
+    },
+    legend: {
+      orient: 'vertical', right: 0, top: 'center',
+      textStyle: { color: isDark.value ? '#8b949e' : '#606266' }
+    },
     series: [{
       type: 'pie', radius: ['45%', '70%'], center: ['38%', '50%'],
       itemStyle: { borderRadius: 4 },
-      data: items.length ? items : [{ name: '无数据', value: 1, itemStyle: { color: '#f0f0f0' } }]
+      label: { color: isDark.value ? '#8b949e' : '#606266' },
+      data: items.length ? items : [{ name: '无数据', value: 1, itemStyle: { color: isDark.value ? '#30363d' : '#f0f0f0' } }]
     }]
   })
   // 注册 resize 监听
@@ -41,6 +53,8 @@ const render = () => {
 }
 
 watch(() => props.data, () => nextTick(render), { deep: true })
+/* 主题联动：切换时销毁并以对应主题重新 init */
+watch(isDark, () => nextTick(render))
 onMounted(() => nextTick(render))
 
 onBeforeUnmount(() => {
