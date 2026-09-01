@@ -1,5 +1,7 @@
 <template>
-  <div ref="editorContainer" class="editor-container"></div>
+  <div class="editor-wrapper">
+    <div ref="editorContainer" class="editor-container"></div>
+  </div>
 </template>
 
 <script setup>
@@ -22,51 +24,87 @@ self.MonacoEnvironment = {
   }
 }
 
+// 全局强制深色主题
+monaco.editor.setTheme('vs-dark')
+
 const props = defineProps({
   content: { type: String, default: '' },
+  oldContent: { type: String, default: '' },
   language: { type: String, default: 'java' },
   readOnly: { type: Boolean, default: true },
   issues: { type: Array, default: () => [] },
-  theme: { type: String, default: 'vs' }
+  theme: { type: String, default: 'vs-dark' }
 })
 
 const emit = defineEmits(['scrollToLine', 'ready'])
 
 const editorContainer = ref(null)
-let editor = null
+let diffEditor = null
 let decorations = []
-let contentWidgets = []
 
 onMounted(async () => {
   await nextTick()
   if (!editorContainer.value) return
 
-  editor = monaco.editor.create(editorContainer.value, {
-    value: props.content,
-    language: props.language,
+  // 创建双栏 Diff 编辑器
+  diffEditor = monaco.editor.createDiffEditor(editorContainer.value, {
+    theme: 'vs-dark',
+    fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+    fontLigatures: true,
+    smoothScrolling: true,
+    cursorSmoothCaretAnimation: 'on',
+    minimap: { enabled: true, scale: 0.75 },
     readOnly: props.readOnly,
-    theme: props.theme,
     fontSize: 13,
     lineNumbers: 'on',
-    minimap: { enabled: true },
     automaticLayout: true,
     scrollBeyondLastLine: false,
     wordWrap: 'on',
     glyphMargin: true,
     renderLineHighlight: 'all',
     folding: true,
-    foldingStrategy: 'indentation'
+    foldingStrategy: 'indentation',
+    // Diff 专属配置
+    renderSideBySide: true,
+    ignoreTrimWhitespace: false,
+    renderIndicators: true,
+    originalEditable: false,
+    diffWordWrap: 'on'
   })
 
-  // 渲染问题标记
+  // 左侧 original = 旧代码，右侧 modified = 新代码
+  const originalModel = monaco.editor.createModel(props.oldContent || '', props.language)
+  const modifiedModel = monaco.editor.createModel(props.content || '', props.language)
+  diffEditor.setModel({ original: originalModel, modified: modifiedModel })
+
+  // 问题标记渲染在右侧（新代码）编辑器上
   renderIssueMarkers()
 
-  emit('ready', editor)
+  emit('ready', diffEditor)
 })
 
 watch(() => props.content, (val) => {
-  if (editor && val !== editor.getValue()) {
-    editor.setValue(val || '')
+  if (!diffEditor) return
+  const modified = diffEditor.getModifiedEditor()
+  if (modified && val !== modified.getValue()) {
+    modified.setValue(val || '')
+  }
+})
+
+watch(() => props.oldContent, (val) => {
+  if (!diffEditor) return
+  const original = diffEditor.getOriginalEditor()
+  if (original && val !== original.getValue()) {
+    original.setValue(val || '')
+  }
+})
+
+watch(() => props.language, (val) => {
+  if (!diffEditor) return
+  const model = diffEditor.getModel()
+  if (model) {
+    monaco.editor.setModelLanguage(model.original, val)
+    monaco.editor.setModelLanguage(model.modified, val)
   }
 })
 
@@ -75,10 +113,14 @@ watch(() => props.issues, () => {
 }, { deep: true })
 
 /**
- * 渲染问题标记 - 红点标记 + 高亮行
+ * 渲染问题标记 - 红点标记 + 高亮行（挂在右侧 modified 编辑器）
  */
 function renderIssueMarkers() {
-  if (!editor || !props.issues || props.issues.length === 0) {
+  if (!diffEditor) return
+  const editor = diffEditor.getModifiedEditor()
+  if (!editor) return
+
+  if (!props.issues || props.issues.length === 0) {
     decorations = editor.deltaDecorations(decorations, [])
     return
   }
@@ -99,9 +141,10 @@ function renderIssueMarkers() {
       : severities.includes('MAJOR') ? 'major'
       : severities.includes('MINOR') ? 'minor' : 'info'
 
-    const color = topSeverity === 'critical' ? '#F56C6C'
-      : topSeverity === 'major' ? '#E6A23C'
-      : topSeverity === 'minor' ? '#409EFF' : '#909399'
+    // GitHub Dark 调色板
+    const color = topSeverity === 'critical' ? '#f85149'
+      : topSeverity === 'major' ? '#d29922'
+      : topSeverity === 'minor' ? '#388bfd' : '#8b949e'
 
     // Glyph边距红点标记
     newDecorations.push({
@@ -140,48 +183,119 @@ function renderIssueMarkers() {
   decorations = editor.deltaDecorations(decorations, newDecorations)
 }
 
-// 滚动到指定行
+// 滚动到指定行（右侧 modified 编辑器）
 function scrollToLine(line) {
-  if (editor) {
-    editor.revealLineInCenter(line)
-    editor.setPosition({ lineNumber: line, column: 1 })
-    editor.focus()
+  if (diffEditor) {
+    const modified = diffEditor.getModifiedEditor()
+    modified.revealLineInCenter(line)
+    modified.setPosition({ lineNumber: line, column: 1 })
+    modified.focus()
   }
 }
 
-// 获取编辑器实例
+// 获取编辑器实例（返回右侧 modified 编辑器，兼容原有交互）
 function getEditor() {
-  return editor
+  return diffEditor ? diffEditor.getModifiedEditor() : null
 }
 
-defineExpose({ scrollToLine, getEditor })
+// 获取 Diff 编辑器根实例
+function getDiffEditor() {
+  return diffEditor
+}
+
+defineExpose({ scrollToLine, getEditor, getDiffEditor })
 
 onUnmounted(() => {
-  if (editor) {
-    editor.dispose()
-    editor = null
+  if (diffEditor) {
+    const model = diffEditor.getModel()
+    if (model) {
+      model.original.dispose()
+      model.modified.dispose()
+    }
+    diffEditor.dispose()
+    diffEditor = null
   }
 })
 </script>
 
 <style>
-/* 行高亮样式 */
-.issue-highlight-critical {
-  background-color: rgba(245, 108, 108, 0.15);
-  border-left: 3px solid #F56C6C;
-}
-.issue-highlight-major {
-  background-color: rgba(230, 162, 60, 0.15);
-  border-left: 3px solid #E6A23C;
-}
-.issue-highlight-minor {
-  background-color: rgba(64, 158, 255, 0.15);
-  border-left: 3px solid #409EFF;
-}
-.issue-highlight-info {
-  background-color: rgba(144, 147, 153, 0.1);
-  border-left: 3px solid #909399;
+/* 外层容器：圆角 + 深色边框 + 微光投影 */
+.editor-wrapper {
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  border: 1px solid #30363d;
+  overflow: hidden;
+  background: #0d1117;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.3),
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
-/* 装订线标记需要 inline style 注入 */
+.editor-container {
+  width: 100%;
+  height: 100%;
+}
+
+/* Diff 编辑器内部背景对齐深色基调 */
+.editor-container :deep(.monaco-editor),
+.editor-container :deep(.monaco-diff-editor) {
+  --vscode-editor-background: #0d1117;
+}
+
+.editor-container :deep(.monaco-editor .margin),
+.editor-container :deep(.monaco-editor .monaco-editor-background) {
+  background-color: #0d1117 !important;
+}
+
+.editor-container :deep(.monaco-diff-editor .diffOverview) {
+  background: #161b22 !important;
+}
+
+.editor-container :deep(.monaco-editor .line-numbers) {
+  color: #6e7681 !important;
+}
+
+/* Diff 分隔条样式 */
+.editor-container :deep(.monaco-diff-editor .diffViewport) {
+  background: rgba(56, 139, 253, 0.1) !important;
+}
+
+/* 行高亮样式（GitHub Dark 调色板，半透明毛玻璃感） */
+.issue-highlight-critical {
+  background-color: rgba(248, 81, 73, 0.12);
+  border-left: 3px solid #f85149;
+}
+.issue-highlight-major {
+  background-color: rgba(210, 153, 34, 0.12);
+  border-left: 3px solid #d29922;
+}
+.issue-highlight-minor {
+  background-color: rgba(56, 139, 253, 0.12);
+  border-left: 3px solid #388bfd;
+}
+.issue-highlight-info {
+  background-color: rgba(139, 148, 158, 0.08);
+  border-left: 3px solid #8b949e;
+}
+
+/* 装订线标记圆点 */
+.issue-gutter-marker {
+  position: relative;
+}
+.issue-gutter-marker::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.issue-gutter-marker.critical::after { background: #f85149; box-shadow: 0 0 6px rgba(248, 81, 73, 0.6); }
+.issue-gutter-marker.major::after { background: #d29922; box-shadow: 0 0 6px rgba(210, 153, 34, 0.6); }
+.issue-gutter-marker.minor::after { background: #388bfd; box-shadow: 0 0 6px rgba(56, 139, 253, 0.6); }
+.issue-gutter-marker.info::after { background: #8b949e; box-shadow: 0 0 4px rgba(139, 148, 158, 0.4); }
 </style>
