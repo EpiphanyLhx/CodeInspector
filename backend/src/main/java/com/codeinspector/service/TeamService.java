@@ -228,6 +228,7 @@ public class TeamService {
                 vo.setUsername(u.getUsername());
                 vo.setAvatar(u.getAvatar());
                 vo.setEmail(u.getEmail());
+                vo.setPhone(u.getPhone());
             }
             return vo;
         }).toList();

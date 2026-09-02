@@ -113,6 +113,9 @@
             <el-table-column prop="email" label="邮箱" min-width="160">
               <template #default="{ row }">{{ row.email || '—' }}</template>
             </el-table-column>
+            <el-table-column prop="phone" label="电话" width="130">
+              <template #default="{ row }">{{ row.phone || '—' }}</template>
+            </el-table-column>
             <el-table-column label="角色" width="130">
               <template #default="{ row }">
                 <el-select

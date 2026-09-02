@@ -117,13 +117,14 @@ const saveInfo = async () => {
 }
 
 // ================ 联系方式 ================
-const contactForm = reactive({ email: user.value.email || '', phone: '' })
+const contactForm = reactive({ email: user.value.email || '', phone: user.value.phone || '' })
 const contactRules = { email: [{ type: 'email', message: '邮箱格式不正确', trigger: 'blur' }] }
 const saveContactLoading = ref(false)
 const saveContact = async () => {
   saveContactLoading.value = true
   try {
-    await updateProfile({ email: contactForm.email })
+    const res = await updateProfile({ email: contactForm.email, phone: contactForm.phone })
+    user.value = res.data; authStore.user = res.data
     ElMessage.success('保存成功')
   } catch {}
   saveContactLoading.value = false
@@ -168,6 +169,11 @@ const handleUpload = async ({ file }) => {
 }
 
 onMounted(async () => {
-  try { const res = await getCurrentUser(); user.value = res.data } catch {}
+  try {
+    const res = await getCurrentUser()
+    user.value = res.data
+    contactForm.email = res.data.email || ''
+    contactForm.phone = res.data.phone || ''
+  } catch {}
 })
 </script>

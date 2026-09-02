@@ -14,4 +14,5 @@ public class TeamMemberVO {
     private String username;
     private String avatar;
     private String email;
+    private String phone;
 }

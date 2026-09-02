@@ -114,6 +114,7 @@ public class AuthService {
 
         if (body.containsKey("username")) user.setUsername(body.get("username"));
         if (body.containsKey("email")) user.setEmail(body.get("email"));
+        if (body.containsKey("phone")) user.setPhone(body.get("phone"));
         if (body.containsKey("avatar")) user.setAvatar(body.get("avatar"));
         if (body.containsKey("role")) user.setRole(body.get("role"));
 

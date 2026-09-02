@@ -12,6 +12,7 @@ public class User {
     private String username;
     private String password;
     private String email;
+    private String phone;
     private String avatar;
     private String role;  // ADMIN / TEAM_LEADER / DEVELOPER / VIEWER
     private Integer status;

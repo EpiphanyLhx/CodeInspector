@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS `user` (
     `username` VARCHAR(64) NOT NULL UNIQUE COMMENT '用户名',
     `password` VARCHAR(256) NOT NULL COMMENT '密码(BCrypt)',
     `email` VARCHAR(128) COMMENT '邮箱',
+    `phone` VARCHAR(32) COMMENT '手机号',
     `avatar` VARCHAR(512) COMMENT '头像URL',
     `role` VARCHAR(32) NOT NULL DEFAULT 'DEVELOPER' COMMENT '角色: ADMIN/TEAM_LEADER/DEVELOPER/VIEWER',
     `status` TINYINT NOT NULL DEFAULT 1 COMMENT '状态: 1启用 0禁用',
@@ -221,6 +222,9 @@ ALTER TABLE `project` ADD COLUMN `git_token_encrypted` TEXT COMMENT 'Git访问�
 
 -- 兼容已存在的数据库: 为 team_review_task 补充 stage 子阶段字段(已存在则忽略报错)
 ALTER TABLE `team_review_task` ADD COLUMN `stage` VARCHAR(32) COMMENT 'REVIEWING时的子阶段: PULLING/SCANNING/AI_REVIEWING' AFTER `status`;
+
+-- 兼容已存在的数据库: 为 user 表补充手机号字段(已存在则忽略报错)
+ALTER TABLE `user` ADD COLUMN `phone` VARCHAR(32) COMMENT '手机号' AFTER `email`;
 
 -- ====================================================================
 -- 团队审查任务

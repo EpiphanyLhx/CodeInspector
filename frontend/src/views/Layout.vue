@@ -75,7 +75,7 @@
           </el-tag>
           <el-dropdown trigger="click">
             <span style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-              <el-avatar :size="32" icon="UserFilled" />
+              <el-avatar :size="32" :src="authStore.user?.avatar || ''" icon="UserFilled" />
               <span>{{ authStore.user?.username || '用户' }}</span>
               <el-icon><ArrowDown /></el-icon>
             </span>
