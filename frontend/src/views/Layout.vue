@@ -31,6 +31,14 @@
           <el-icon><DocumentChecked /></el-icon>
           <span>审查详情</span>
         </el-menu-item>
+        <el-menu-item index="/code-repository">
+          <el-icon><FolderOpened /></el-icon>
+          <span>代码仓</span>
+        </el-menu-item>
+        <el-menu-item index="/api-keys">
+          <el-icon><Key /></el-icon>
+          <span>API密钥</span>
+        </el-menu-item>
         <el-menu-item index="/profile">
           <el-icon><User /></el-icon>
           <span>个人信息</span>

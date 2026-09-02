@@ -62,6 +62,18 @@ const routes = [
         meta: { title: '审查详情', icon: 'DocumentChecked' }
       },
       {
+        path: 'code-repository',
+        name: 'CodeRepository',
+        component: () => import('@/views/CodeRepository.vue'),
+        meta: { title: '代码仓', icon: 'FolderOpened' }
+      },
+      {
+        path: 'api-keys',
+        name: 'ApiKeys',
+        component: () => import('@/views/ApiKeys.vue'),
+        meta: { title: 'API密钥', icon: 'Key' }
+      },
+      {
         path: 'profile',
         name: 'Profile',
         component: () => import('@/views/Profile.vue'),
