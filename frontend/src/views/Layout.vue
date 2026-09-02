@@ -49,12 +49,7 @@
     <!-- 主区域 -->
     <div class="app-main">
       <div class="app-header">
-        <div>
-          <el-breadcrumb separator="/">
-            <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
-            <el-breadcrumb-item v-if="route.meta.title">{{ route.meta.title }}</el-breadcrumb-item>
-          </el-breadcrumb>
-        </div>
+        <div></div>
         <div style="display:flex;align-items:center;gap:16px;">
           <!-- 主题切换按钮：太阳 / 月亮 极简 SVG -->
           <button class="theme-toggle-btn" @click="toggleTheme" :title="isDark ? '切换到浅色模式' : '切换到深色模式'">
