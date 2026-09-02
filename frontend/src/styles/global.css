@@ -144,7 +144,6 @@ a {
   width: var(--sidebar-width);
   background: var(--bg-sidebar);
   color: var(--sidebar-text);
-  border-right: 1px solid var(--border-sidebar);
   overflow-y: auto;
   flex-shrink: 0;
 }
@@ -159,7 +158,6 @@ a {
 .app-header {
   height: var(--header-height);
   background: var(--bg-page);
-  border-bottom: 1px solid var(--border-light);
   box-shadow: var(--shadow-header);
   display: flex;
   align-items: center;
