@@ -5,7 +5,7 @@
     <el-tabs v-model="activeTab" type="border-card">
       <!-- 1. 头像管理 -->
       <el-tab-pane label="头像管理" name="avatar">
-        <el-row :gutter="30">
+        <el-row :gutter="16">
           <el-col :span="8" style="text-align:center;">
             <el-avatar :size="160" :src="user.avatar ? user.avatar : ''"
               style="margin-bottom:16px;">
@@ -18,7 +18,7 @@
                   <el-icon><Upload /></el-icon> 上传头像
                 </el-button>
               </el-upload>
-              <p style="font-size:12px;color:#909399;margin-top:8px;">支持 JPG/PNG，不超过 2MB</p>
+              <p style="font-size:12px;color:var(--text-placeholder);margin-top:8px;">支持 JPG/PNG，不超过 2MB</p>
             </div>
           </el-col>
           <el-col :span="16">
@@ -85,7 +85,7 @@
       <el-tab-pane label="代码仓" name="history">
         <div v-loading="historyLoading">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-            <span style="font-size:14px;color:#606266;">
+            <span style="font-size:14px;color:var(--text-secondary);">
               上传记录（{{ history.length }}条）
               <span v-if="statusFilter" style="color:#409EFF;"> · 已筛选</span>
             </span>
@@ -122,9 +122,9 @@
                 <template v-if="row.reviewStatus === 'COMPLETED'">
                   <span v-if="row.critical" style="color:#F56C6C;font-weight:600;">●{{ row.critical }}</span>
                   <span v-if="row.major" style="color:#E6A23C;margin-left:4px;">●{{ row.major }}</span>
-                  <span style="color:#909399;margin-left:4px;">{{ row.issues }}个</span>
+                  <span style="color:var(--text-placeholder);margin-left:4px;">{{ row.issues }}个</span>
                 </template>
-                <span v-else style="color:#c0c4cc;">-</span>
+                <span v-else style="color:var(--text-placeholder);">-</span>
               </template>
             </el-table-column>
             <el-table-column label="上传时间" width="160">
@@ -153,7 +153,7 @@
             title="在这里配置你自己的AI API密钥，审查时将优先使用你的密钥调用AI模型。"
             type="info" :closable="false" show-icon style="margin-bottom:16px;" />
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-            <span style="font-size:14px;color:#606266;">已配置 {{ apiKeys.length }} 个密钥</span>
+            <span style="font-size:14px;color:var(--text-secondary);">已配置 {{ apiKeys.length }} 个密钥</span>
             <el-button type="primary" size="small" @click="showAddKeyDialog">添加密钥</el-button>
           </div>
           <el-table :data="apiKeys" stripe>
@@ -217,7 +217,7 @@
           <el-input v-model="keyForm.apiKey" type="password" show-password
             autocomplete="one-time-code"
             placeholder="请输入你的API Key" />
-          <div style="font-size:12px;color:#909399;margin-top:4px;">
+          <div style="font-size:12px;color:var(--text-placeholder);margin-top:4px;">
             Key将使用AES加密存储，不会明文保存
           </div>
         </el-form-item>
@@ -239,7 +239,7 @@
                keyForm.modelName.toLowerCase().includes('qwen') ? 'https://dashscope.aliyuncs.com/compatible-mode/v1' :
                keyForm.modelName.toLowerCase().includes('gpt') ? 'https://api.openai.com/v1' : '' }}
           </div>
-          <div style="font-size:12px;color:#909399;margin-top:4px;" v-else-if="!keyForm.modelName">
+          <div style="font-size:12px;color:var(--text-placeholder);margin-top:4px;" v-else-if="!keyForm.modelName">
             请输入OpenAI兼容格式的API端点地址，选择模型后可自动推断
           </div>
           <div style="font-size:12px;color:#67C23A;margin-top:4px;" v-else>
@@ -251,7 +251,7 @@
             filterable allow-create style="width:100%">
             <el-option v-for="m in availableModels" :key="m" :label="m" :value="m" />
           </el-select>
-          <div style="font-size:12px;color:#909399;margin-top:4px;">
+          <div style="font-size:12px;color:var(--text-placeholder);margin-top:4px;">
             可输入自定义模型名称（如 deepseek-chat、glm-4-plus 等）
           </div>
         </el-form-item>

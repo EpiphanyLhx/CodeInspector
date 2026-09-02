@@ -80,7 +80,6 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import * as echarts from 'echarts'
-import StatCards from '@/components/StatCards.vue'
 import SeverityPie from '@/components/charts/SeverityPie.vue'
 import CategoryBar from '@/components/charts/CategoryBar.vue'
 import TrendLine from '@/components/charts/TrendLine.vue'
@@ -235,7 +234,7 @@ onBeforeUnmount(() => {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--border-color);
-  border-radius: 10px; padding: 22px 20px;
+  border-radius: 8px; padding: 20px;
   box-shadow: var(--shadow-card); text-align: center;
   transition: transform 0.15s;
 }
@@ -252,7 +251,7 @@ onBeforeUnmount(() => {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--border-color);
-  border-radius: 10px;
+  border-radius: 8px;
   box-shadow: var(--shadow-card);
   margin-bottom: 16px; overflow: hidden;
 }
@@ -260,7 +259,7 @@ onBeforeUnmount(() => {
   padding: 14px 20px; font-size: 15px; font-weight: 600;
   color: var(--text-regular); border-bottom: 1px solid var(--border-light);
 }
-.panel-body { padding: 16px 20px; }
+.panel-body { padding: 20px; }
 
 /* 报告 */
 .report-text { font-size: 14px; color: var(--text-secondary); line-height: 1.8; margin-bottom: 16px; }

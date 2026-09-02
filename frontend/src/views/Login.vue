@@ -230,7 +230,7 @@ const switchToLogin = () => { isRegister.value = false }
   background: linear-gradient(135deg, #66b1ff, #409EFF);
   transform: translateY(-1px); box-shadow: 0 6px 20px rgba(64,158,255,0.4);
 }
-:deep(.el-form-item) { margin-bottom: 20px; }
+:deep(.el-form-item) { margin-bottom: 18px; }
 
 /* 响应式 */
 @media (max-width: 480px) {

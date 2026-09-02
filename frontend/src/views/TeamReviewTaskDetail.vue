@@ -13,7 +13,7 @@
               {{ statusLabel(task.status) }}
             </el-tag>
           </h2>
-          <p style="color:#909399;margin-top:6px;">{{ task.description || '暂无描述' }}</p>
+          <p style="color:var(--text-placeholder);margin-top:6px;">{{ task.description || '暂无描述' }}</p>
         </div>
         <div style="display:flex;gap:8px;flex-shrink:0;">
           <el-button v-if="task.canSubmit && task.status !== 'REVIEWING'"
@@ -59,7 +59,7 @@
                 <span v-if="task.lastCommitHash" style="font-family:monospace;">
                   {{ task.lastCommitHash }}
                 </span>
-                <span v-else style="color:#c0c4cc;">尚未提交</span>
+                <span v-else style="color:var(--text-placeholder);">尚未提交</span>
               </el-descriptions-item>
             </el-descriptions>
 
@@ -97,7 +97,7 @@
                 </div>
                 <el-progress :percentage="progress.percentage || 0" :stroke-width="14"
                   :status="progress.percentage === 100 ? 'success' : ''" striped striped-flow />
-                <p style="font-size:12px;color:#909399;margin-top:8px;">
+                <p style="font-size:12px;color:var(--text-placeholder);margin-top:8px;">
                   系统正在对最新提交的代码进行切片审查，完成后任务将自动标记为「已完成」。
                 </p>
               </div>
@@ -119,13 +119,13 @@
             </template>
             <div v-for="a in task.assignees" :key="a.userId"
               style="display:flex;align-items:center;gap:10px;padding:8px 0;
-                     border-bottom:1px solid #f5f5f5;">
+                     border-bottom:1px solid var(--border-light);">
               <el-avatar :size="34" :src="a.avatar">
                 {{ (a.username || '?').charAt(0).toUpperCase() }}
               </el-avatar>
               <div>
                 <div style="font-size:14px;font-weight:500;">{{ a.username || '用户' + a.userId }}</div>
-                <div style="font-size:11px;color:#c0c4cc;">ID: {{ a.userId }}</div>
+                <div style="font-size:11px;color:var(--text-placeholder);">ID: {{ a.userId }}</div>
               </div>
               <el-tag v-if="task.lastSubmitterId === a.userId" type="success" size="small"
                 style="margin-left:auto;">最近提交</el-tag>
@@ -134,7 +134,7 @@
 
           <el-card shadow="never" style="border-radius:8px;margin-top:16px;">
             <template #header><span style="font-weight:600;">使用流程</span></template>
-            <ol style="margin:0;padding-left:20px;font-size:13px;color:#606266;line-height:2;">
+            <ol style="margin:0;padding-left:20px;font-size:13px;color:var(--text-secondary);line-height:2;">
               <li>成员在本地 IDE 编写代码</li>
               <li>commit 并 push 到审查分支</li>
               <li>点击「提交代码并审查」</li>

@@ -16,7 +16,7 @@
           </el-option>
         </el-select>
       </div>
-      <el-icon :size="20" color="#909399"><ArrowRight /></el-icon>
+      <el-icon :size="20" color="var(--text-placeholder)"><ArrowRight /></el-icon>
       <div class="selector-group">
         <span class="selector-label">选择文件</span>
         <el-select v-model="selectedFileId" placeholder="请先选择项目" filterable
@@ -31,7 +31,7 @@
           {{ currentIssueCount }} 个问题
         </el-tag>
         <el-tag v-else type="success" effect="dark">无问题</el-tag>
-        <span style="font-size:12px;color:#909399;margin-left:8px;">
+        <span style="font-size:12px;color:var(--text-placeholder);margin-left:8px;">
           {{ currentLanguage }} · {{ currentLineCount }} 行
         </span>
       </div>
@@ -189,7 +189,7 @@ onMounted(() => loadProjects())
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--border-color);
   border-radius: 8px; box-shadow: var(--shadow-card);
-  margin-bottom: 12px; flex-shrink: 0; flex-wrap: wrap;
+  margin-bottom: 16px; flex-shrink: 0; flex-wrap: wrap;
 }
 .selector-group { display: flex; flex-direction: column; gap: 4px; }
 .selector-label { font-size: 12px; color: var(--text-placeholder); font-weight: 500; }
@@ -228,19 +228,19 @@ onMounted(() => loadProjects())
 .issue-row.severity-critical { border-left-color: #F56C6C; }
 .issue-row.severity-major { border-left-color: #E6A23C; }
 .issue-row.severity-minor { border-left-color: #409EFF; }
-.issue-row.severity-info { border-left-color: #909399; }
+.issue-row.severity-info { border-left-color: var(--text-placeholder); }
 
 .issue-row-top { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; flex-wrap: wrap; }
 .sev-tag { padding: 1px 6px; border-radius: 3px; font-size: 11px; color: #fff; font-weight: 600; }
 .sev-tag.critical { background: #F56C6C; }
 .sev-tag.major { background: #E6A23C; }
 .sev-tag.minor { background: #409EFF; }
-.sev-tag.info { background: #909399; }
+.sev-tag.info { background: var(--text-placeholder); }
 .cat-tag { padding: 1px 5px; border-radius: 3px; font-size: 11px; background: var(--category-tag-bg); color: var(--text-secondary); }
 .line-info { font-size: 12px; color: var(--text-placeholder); margin-left: auto; }
 
-.issue-row-title { font-size: 13px; font-weight: 600; color: #303133; margin-bottom: 2px; }
-.issue-row-desc { font-size: 12px; color: #606266; line-height: 1.4; margin-bottom: 4px; }
+.issue-row-title { font-size: 13px; font-weight: 600; color: var(--text-regular); margin-bottom: 2px; }
+.issue-row-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.4; margin-bottom: 4px; }
 .issue-row-suggestion { font-size: 12px; color: #67C23A; }
 .sug-label { font-weight: 600; }
 
@@ -250,4 +250,11 @@ onMounted(() => loadProjects())
 .dot-minor { background: #409EFF; }
 
 .empty-main { flex: 1; display: flex; align-items: center; justify-content: center; }
+
+/* 响应式：中等屏幕下分割布局改为上下堆叠 */
+@media (max-width: 1200px) {
+  .review-main { flex-direction: column; }
+  .review-editor-panel { min-height: 360px; }
+  .review-issues-panel { width: 100%; max-height: 45vh; }
+}
 </style>

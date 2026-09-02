@@ -3,11 +3,11 @@
     <!-- 顶部统计概览 -->
     <div class="review-summary-bar" v-loading="loading">
       <div class="summary-item">
-        <div class="summary-value" :style="{color:'#303133'}">{{ project?.name || '-' }}</div>
+        <div class="summary-value" :style="{color:'var(--text-regular)'}">{{ project?.name || '-' }}</div>
         <div class="summary-label">项目名称</div>
       </div>
       <div class="summary-item">
-        <div class="summary-value" style="color:#303133">{{ allIssues.length }}</div>
+        <div class="summary-value" style="color:var(--text-regular)">{{ allIssues.length }}</div>
         <div class="summary-label">问题总数</div>
       </div>
       <div class="summary-item">
@@ -135,7 +135,7 @@
           <div class="report-section">
             <h3>📊 问题统计</h3>
             <el-row :gutter="16">
-              <el-col :span="6" v-for="stat in reportStats" :key="stat.label">
+              <el-col :span="8" v-for="stat in reportStats" :key="stat.label">
                 <div class="report-stat-card">
                   <div class="stat-num" :style="{color:stat.color}">{{ stat.value }}</div>
                   <div class="stat-text">{{ stat.label }}</div>
@@ -218,8 +218,8 @@ const reportStats = computed(() => {
     { label: '代码风格', value: r.styleCount || 0, color: '#409EFF' },
     { label: '性能', value: r.performanceCount || 0, color: '#67C23A' },
     { label: '最佳实践', value: r.bestPracticeCount || 0, color: '#9254de' },
-    { label: '已审查文件', value: r.reviewedFiles || 0, color: '#909399' },
-    { label: '已审查行数', value: r.reviewedLines || 0, color: '#909399' }
+    { label: '已审查文件', value: r.reviewedFiles || 0, color: 'var(--text-placeholder)' },
+    { label: '已审查行数', value: r.reviewedLines || 0, color: 'var(--text-placeholder)' }
   ]
 })
 
@@ -370,7 +370,7 @@ onBeforeUnmount(() => {
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  box-shadow: var(--shadow-card); padding: 16px 0; margin-bottom: 12px; flex-shrink: 0;
+  box-shadow: var(--shadow-card); padding: 16px 0; margin-bottom: 16px; flex-shrink: 0;
 }
 .summary-item {
   flex: 1; text-align: center; border-right: 1px solid var(--border-light);
@@ -445,7 +445,7 @@ onBeforeUnmount(() => {
 .report-section h3 { font-size: 16px; margin-bottom: 12px; color: var(--text-regular); }
 .report-summary-text { font-size: 14px; color: var(--text-secondary); line-height: 1.8; padding: 12px; background: var(--bg-hover); border-radius: 6px; }
 
-.report-stat-card { text-align: center; padding: 16px 8px; background: var(--bg-hover); border-radius: 6px; margin-bottom: 8px; }
+.report-stat-card { text-align: center; padding: 16px 12px; background: var(--bg-hover); border-radius: 6px; margin-bottom: 8px; }
 .report-stat-card .stat-num { font-size: 24px; font-weight: 700; }
 .report-stat-card .stat-text { font-size: 12px; color: var(--text-placeholder); margin-top: 4px; }
 
@@ -453,6 +453,13 @@ onBeforeUnmount(() => {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--border-color);
-  border-radius: 6px; padding: 12px; margin-bottom: 12px; box-shadow: var(--shadow-card); }
+  border-radius: 8px; padding: 12px; margin-bottom: 12px; box-shadow: var(--shadow-card); }
 .report-chart h4 { font-size: 14px; margin-bottom: 8px; color: var(--text-regular); }
+
+/* 响应式：中等屏幕下分割布局改为上下堆叠 */
+@media (max-width: 1200px) {
+  .review-split-layout { flex-direction: column; }
+  .review-left { min-height: 360px; }
+  .review-right { width: 100%; max-height: 45vh; }
+}
 </style>

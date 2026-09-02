@@ -13,7 +13,7 @@
     </div>
 
     <el-row :gutter="16">
-      <el-col :span="8" v-for="team in teams" :key="team.id" style="margin-bottom:16px;">
+      <el-col :xs="24" :sm="12" :md="8" v-for="team in teams" :key="team.id" style="margin-bottom:16px;">
         <el-card shadow="hover" style="border-radius:8px;">
           <template #header>
             <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -21,10 +21,10 @@
               <el-tag :type="roleType(team.myRole)" size="small">{{ roleLabel(team.myRole) }}</el-tag>
             </div>
           </template>
-          <p style="font-size:13px;color:#909399;min-height:40px;margin:0;">
+          <p style="font-size:13px;color:var(--text-placeholder);min-height:40px;margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.5;">
             {{ team.description || '暂无描述' }}
           </p>
-          <div style="display:flex;gap:12px;font-size:12px;color:#c0c4cc;margin-top:8px;">
+          <div style="display:flex;gap:12px;font-size:12px;color:var(--text-placeholder);margin-top:8px;">
             <span>{{ team.memberCount }} 名成员</span>
             <span>创建于 {{ formatDate(team.createTime) }}</span>
           </div>
@@ -80,7 +80,7 @@
           <!-- 邀请码区域（仅管理员可见） -->
           <div v-if="selectedTeam && isAdmin(selectedTeam.myRole)" class="invite-section">
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-              <span style="font-size:13px;color:#606266;white-space:nowrap;">团队邀请码：</span>
+              <span style="font-size:13px;color:var(--text-secondary);white-space:nowrap;">团队邀请码：</span>
               <el-input v-model="inviteCode" readonly placeholder="尚未生成" style="width:180px;" />
               <el-button size="small" @click="copyInviteCode" :disabled="!inviteCode">复制</el-button>
               <el-button v-if="!inviteCode" size="small" type="primary" @click="handleGenerateCode">生成邀请码</el-button>
@@ -105,7 +105,7 @@
                   <el-avatar :size="32" :src="row.avatar">{{ (row.username || '?').charAt(0).toUpperCase() }}</el-avatar>
                   <div>
                     <div style="font-size:13px;font-weight:500;">{{ row.username || '用户' + row.userId }}</div>
-                    <div style="font-size:11px;color:#c0c4cc;">ID: {{ row.userId }}</div>
+                    <div style="font-size:11px;color:var(--text-placeholder);">ID: {{ row.userId }}</div>
                   </div>
                 </div>
               </template>
@@ -471,7 +471,7 @@ onMounted(loadTeams)
 
 <style scoped>
 .invite-section {
-  background: #f5f7fa;
+  background: var(--bg-hover);
   border-radius: 6px;
   padding: 12px 16px;
   margin-bottom: 8px;

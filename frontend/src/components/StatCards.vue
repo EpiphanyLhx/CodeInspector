@@ -1,5 +1,5 @@
 <template>
-  <el-row :gutter="20">
+  <el-row :gutter="16">
     <el-col :span="6" v-for="item in cards" :key="item.label">
       <div class="stat-card">
         <div class="stat-value" :style="{ color: item.color }">{{ item.value }}</div>

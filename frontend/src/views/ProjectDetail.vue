@@ -4,7 +4,7 @@
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
       <div>
         <h2 style="font-size:22px;">{{ project.name }}</h2>
-        <p style="color:#909399;margin-top:4px;">{{ project.description || '暂无描述' }}</p>
+        <p style="color:var(--text-placeholder);margin-top:4px;">{{ project.description || '暂无描述' }}</p>
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <el-button v-if="project.sourceType === 'UPLOAD'" type="primary"
@@ -22,7 +22,7 @@
         <el-tooltip placement="top"
           content="开启后，AI 会先分析你项目的代码风格（缩进、命名、注释、日志方式等），让修复建议和修复后代码遵循你的风格，且不把你既有的风格习惯报为问题">
           <span style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
-            <span style="font-size:14px;color:#606266;">代码风格审查</span>
+            <span style="font-size:14px;color:var(--text-secondary);">代码风格审查</span>
             <el-switch v-model="styleEnabled" style="--el-switch-on-color:#67C23A;" />
           </span>
         </el-tooltip>
@@ -58,7 +58,7 @@
     <div class="chart-container" style="margin-top:20px;">
       <h3>
         代码文件列表
-        <span v-if="project.reviewStatus === 'COMPLETED'" style="font-size:12px;color:#909399;margin-left:8px;">
+        <span v-if="project.reviewStatus === 'COMPLETED'" style="font-size:12px;color:var(--text-placeholder);margin-left:8px;">
           点击文件名查看AI审查报告
         </span>
       </h3>
@@ -81,7 +81,7 @@
               <span v-else style="color:#67C23A;font-weight:600;">✓ 通过</span>
             </template>
             <span v-else-if="project.reviewStatus === 'IN_PROGRESS'" style="color:#E6A23C;">审查中</span>
-            <span v-else style="color:#909399;">待审查</span>
+            <span v-else style="color:var(--text-placeholder);">待审查</span>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="80" align="center">
@@ -112,7 +112,7 @@
     <!-- 审查状态栏 -->
     <div class="code-dialog-bar">
       <template v-if="!issuesLoaded && issuesLoading">
-        <span style="color:#909399;">⏳ AI审查数据加载中...</span>
+        <span style="color:var(--text-placeholder);">⏳ AI审查数据加载中...</span>
       </template>
       <template v-else-if="currentFileIssues.length > 0">
         <span style="color:#F56C6C;">
@@ -125,7 +125,7 @@
       <template v-else>
         <span style="color:#E6A23C;">⏳ 审查尚未完成，请等待审查结束后查看</span>
       </template>
-      <span style="font-size:12px;color:#909399;margin-left:12px;">
+      <span style="font-size:12px;color:var(--text-placeholder);margin-left:12px;">
         {{ viewingFile?.filePath }}
       </span>
     </div>
@@ -308,7 +308,7 @@ const infoCards = computed(() => [
   { label: '代码文件', value: project.value?.totalFiles || 0, color: '#409EFF' },
   { label: '总行数', value: project.value?.totalLines || 0, color: '#67C23A' },
   { label: '代码来源', value: project.value?.sourceType === 'GIT' ? 'Git仓库' : '上传', color: '#E6A23C' },
-  { label: '审查状态', value: statusMap[project.value?.reviewStatus] || '未知', color: '#909399' }
+  { label: '审查状态', value: statusMap[project.value?.reviewStatus] || '未知', color: 'var(--text-placeholder)' }
 ])
 
 const statusMap = { PENDING: '待审查', IN_PROGRESS: '审查中', COMPLETED: '已完成', FAILED: '失败' }
@@ -605,14 +605,14 @@ onUnmounted(() => {
 .analysis-item.sev-critical { border-left-color: #F56C6C; background: var(--sev-critical-bg); }
 .analysis-item.sev-major { border-left-color: #E6A23C; background: var(--sev-major-bg); }
 .analysis-item.sev-minor { border-left-color: #409EFF; background: var(--sev-minor-bg); }
-.analysis-item.sev-info { border-left-color: #909399; background: var(--sev-info-bg); }
+.analysis-item.sev-info { border-left-color: var(--text-placeholder); background: var(--sev-info-bg); }
 
 .ai-line { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
 .ai-severity { padding: 2px 8px; border-radius: 4px; font-size: 11px; color: #fff; font-weight: 600; }
 .ai-severity.critical { background: #F56C6C; }
 .ai-severity.major { background: #E6A23C; }
 .ai-severity.minor { background: #409EFF; }
-.ai-severity.info { background: #909399; }
+.ai-severity.info { background: var(--text-placeholder); }
 .ai-category { padding: 2px 6px; border-radius: 3px; font-size: 11px; background: var(--category-tag-bg); color: var(--text-secondary); }
 .ai-location { font-size: 11px; color: var(--text-placeholder); margin-left: auto; }
 

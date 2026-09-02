@@ -8,13 +8,13 @@
     </div>
 
     <!-- 项目列表 -->
-    <el-row :gutter="16">
-      <el-col :span="8" v-for="project in projects" :key="project.id" style="margin-bottom:16px;">
+    <el-row :gutter="16" v-loading="listLoading">
+      <el-col :xs="24" :sm="12" :md="8" v-for="project in projects" :key="project.id" style="margin-bottom:16px;">
         <el-card shadow="hover" style="border-radius:8px;position:relative;">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;cursor:pointer;" @click="router.push('/projects/' + project.id)">
             <div style="flex:1;">
               <h3 style="font-size:16px;margin-bottom:4px;">{{ project.name }}</h3>
-              <p style="font-size:13px;color:#909399;margin-bottom:12px;">
+              <p style="font-size:13px;color:var(--text-placeholder);margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.5;min-height:39px;">
                 {{ project.description || '暂无描述' }}
               </p>
               <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -26,7 +26,7 @@
               </div>
             </div>
           </div>
-          <div style="margin-top:12px;display:flex;gap:16px;font-size:12px;color:#909399;">
+          <div style="margin-top:12px;display:flex;gap:16px;font-size:12px;color:var(--text-placeholder);">
             <span>{{ project.totalFiles || 0 }} 文件</span>
             <span>{{ project.totalLines || 0 }} 行</span>
             <span>{{ project.issueCount || 0 }} 问题</span>
@@ -36,7 +36,7 @@
             <span v-if="project.majorCount" style="color:#E6A23C;font-size:12px;">●{{ project.majorCount }}</span>
             <span v-if="project.minorCount" style="color:#409EFF;font-size:12px;">●{{ project.minorCount }}</span>
           </div>
-          <div style="margin-top:10px;text-align:right;border-top:1px solid #f0f0f0;padding-top:8px;">
+          <div style="margin-top:10px;text-align:right;border-top:1px solid var(--border-light);padding-top:8px;">
             <el-button link type="danger" size="small" icon="Delete"
               @click.stop="handleDelete(project)">删除</el-button>
           </div>
@@ -117,6 +117,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 
 const router = useRouter()
 const projects = ref([])
+const listLoading = ref(false)
 const page = ref(1)
 const pageSize = ref(9)
 const total = ref(0)
@@ -131,11 +132,13 @@ const statusLabel = (s) => {
 }
 
 const loadProjects = async () => {
+  listLoading.value = true
   try {
     const res = await getProjectList(page.value, pageSize.value)
     projects.value = res.data.records || []
     total.value = res.data.total || 0
   } catch { /* ignore */ }
+  listLoading.value = false
 }
 
 // 创建项目

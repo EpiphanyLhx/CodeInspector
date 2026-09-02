@@ -17,7 +17,7 @@
       <el-table-column label="任务标题" min-width="200">
         <template #default="{ row }">
           <el-link type="primary" @click="goDetail(row.id)">{{ row.title }}</el-link>
-          <div v-if="row.description" style="font-size:12px;color:#909399;margin-top:2px;
+          <div v-if="row.description" style="font-size:12px;color:var(--text-placeholder);margin-top:2px;
                white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:320px;">
             {{ row.description }}
           </div>
@@ -42,7 +42,7 @@
       <el-table-column label="最后提交" width="120">
         <template #default="{ row }">
           <span v-if="row.lastSubmitterName">{{ row.lastSubmitterName }}</span>
-          <span v-else style="color:#c0c4cc;">—</span>
+          <span v-else style="color:var(--text-placeholder);">—</span>
         </template>
       </el-table-column>
       <el-table-column label="提交时间" width="160">
@@ -53,7 +53,7 @@
           <span v-if="row.lastCommitHash" style="font-family:monospace;font-size:12px;">
             {{ shortHash(row.lastCommitHash) }}
           </span>
-          <span v-else style="color:#c0c4cc;">—</span>
+          <span v-else style="color:var(--text-placeholder);">—</span>
         </template>
       </el-table-column>
       <el-table-column label="截止时间" width="120">
@@ -83,7 +83,7 @@
             @change="onTeamChange">
             <el-option v-for="t in myTeams" :key="t.id" :label="t.name" :value="t.id">
               <span>{{ t.name }}</span>
-              <span style="float:right;color:#909399;font-size:12px;">{{ roleLabel(t.myRole) }}</span>
+              <span style="float:right;color:var(--text-placeholder);font-size:12px;">{{ roleLabel(t.myRole) }}</span>
             </el-option>
           </el-select>
         </el-form-item>
@@ -92,7 +92,7 @@
             style="width:100%" :disabled="!createForm.teamId" @change="onProjectChange">
             <el-option v-for="p in teamGitProjects" :key="p.id" :label="p.name" :value="p.id">
               <span>{{ p.name }}</span>
-              <span style="float:right;color:#909399;font-size:12px;">{{ p.language }}</span>
+              <span style="float:right;color:var(--text-placeholder);font-size:12px;">{{ p.language }}</span>
             </el-option>
           </el-select>
           <div v-if="createForm.teamId && teamGitProjects.length === 0"
