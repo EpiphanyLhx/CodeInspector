@@ -2,9 +2,9 @@
   <div class="app-layout">
     <!-- 侧边栏 -->
     <div class="app-sidebar">
-      <div style="padding:20px;text-align:center;border-bottom:1px solid var(--border-sidebar);">
-        <h2 style="font-size:20px;color:var(--sidebar-text);font-weight:700;">CodeInspector</h2>
-        <p style="font-size:12px;color:var(--sidebar-text-secondary);margin-top:4px;">智能代码审查系统</p>
+      <div style="height:72px;display:flex;flex-direction:column;justify-content:center;align-items:center;border-bottom:1px solid var(--border-sidebar);">
+        <h2 style="font-size:20px;color:var(--sidebar-text);font-weight:700;line-height:1.2;">CodeInspector</h2>
+        <p style="font-size:12px;color:var(--sidebar-text-secondary);margin-top:4px;line-height:1.2;">智能代码审查系统</p>
       </div>
       <el-menu :default-active="activeMenu" router
         :background-color="menuBg"
