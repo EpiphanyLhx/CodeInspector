@@ -455,10 +455,12 @@ a {
 }
 .el-menu-item,
 .el-sub-menu__title {
-  border-radius: 6px;
+  border-radius: 8px;
+  margin: 2px 12px;
+  width: calc(100% - 24px);
 }
 .el-menu-item.is-active {
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
 /* ---------- 弹窗 & 抽屉 ---------- */
