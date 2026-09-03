@@ -73,7 +73,7 @@
     </el-dialog>
 
     <!-- 团队详情对话框（成员管理 + 团队项目） -->
-    <el-dialog v-model="showDetailDialog" :title="selectedTeam?.name" width="860px" top="5vh">
+    <el-dialog v-model="showDetailDialog" :title="selectedTeam?.name" width="960px" top="5vh">
       <el-tabs v-model="detailTab">
         <!-- 成员管理 -->
         <el-tab-pane label="成员管理" name="members">
@@ -99,7 +99,7 @@
           </div>
 
           <el-table :data="members" style="width:100%">
-            <el-table-column label="成员" min-width="180">
+            <el-table-column label="成员" width="160">
               <template #default="{ row }">
                 <div style="display:flex;align-items:center;gap:8px;">
                   <el-avatar :size="32" :src="row.avatar">{{ (row.username || '?').charAt(0).toUpperCase() }}</el-avatar>
@@ -110,10 +110,10 @@
                 </div>
               </template>
             </el-table-column>
-            <el-table-column prop="email" label="邮箱" min-width="160">
+            <el-table-column prop="email" label="邮箱" width="180">
               <template #default="{ row }">{{ row.email || '—' }}</template>
             </el-table-column>
-            <el-table-column prop="phone" label="电话" width="130">
+            <el-table-column prop="phone" label="电话" width="120">
               <template #default="{ row }">{{ row.phone || '—' }}</template>
             </el-table-column>
             <el-table-column label="角色" width="130">
@@ -122,7 +122,7 @@
                   v-if="canEditRole(row)"
                   v-model="row.role"
                   size="small"
-                  style="width:110px;"
+                  style="width:100%;"
                   @change="(val) => handleRoleChange(row, val)"
                 >
                   <el-option label="普通成员" value="MEMBER" />
@@ -131,10 +131,10 @@
                 <el-tag v-else :type="roleType(row.role)" size="small">{{ roleLabel(row.role) }}</el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="加入时间" width="110">
+            <el-table-column label="加入时间" width="100">
               <template #default="{ row }">{{ formatDate(row.joinTime) }}</template>
             </el-table-column>
-            <el-table-column label="操作" width="160">
+            <el-table-column label="操作" width="180">
               <template #default="{ row }">
                 <el-button link type="primary" size="small" @click="openMemberDetail(row)">查看项目/审查</el-button>
                 <el-button
