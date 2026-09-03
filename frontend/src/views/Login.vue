@@ -82,7 +82,7 @@
     </div>
 
     <!-- 底部版权 -->
-    <div class="auth-footer">© 2026 CodeInspector · 智能代码审查系统</div>
+    <div class="auth-footer">© 2026 CodeInspector · 智能代码审查系统 by LHX </div>
   </div>
 </template>
 

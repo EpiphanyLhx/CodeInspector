@@ -100,7 +100,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useTheme } from '@/composables/useTheme'
@@ -108,6 +108,13 @@ import { useTheme } from '@/composables/useTheme'
 const route = useRoute()
 const authStore = useAuthStore()
 const { isDark, toggleTheme } = useTheme()
+
+// 刷新页面后从后端重新拉取最新用户信息（含头像）
+onMounted(() => {
+  if (authStore.isLoggedIn) {
+    authStore.fetchUser()
+  }
+})
 
 const activeMenu = computed(() => route.path)
 

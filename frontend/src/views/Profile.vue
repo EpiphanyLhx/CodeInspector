@@ -22,7 +22,7 @@
             </div>
           </el-col>
           <el-col :span="16">
-            <el-alert title="头像用于个人标识，建议使用清晰正面照" type="info" :closable="false" show-icon />
+            <el-alert title="头像用于个人标识" type="info" :closable="false" show-icon />
           </el-col>
         </el-row>
       </el-tab-pane>
@@ -111,6 +111,7 @@ const saveInfo = async () => {
   try {
     const res = await updateProfile({ username: infoForm.username, email: infoForm.email })
     user.value = res.data; authStore.user = res.data
+    localStorage.setItem('user', JSON.stringify(res.data))
     ElMessage.success('保存成功')
   } catch {}
   saveInfoLoading.value = false
@@ -125,6 +126,7 @@ const saveContact = async () => {
   try {
     const res = await updateProfile({ email: contactForm.email, phone: contactForm.phone })
     user.value = res.data; authStore.user = res.data
+    localStorage.setItem('user', JSON.stringify(res.data))
     ElMessage.success('保存成功')
   } catch {}
   saveContactLoading.value = false
@@ -163,6 +165,7 @@ const handleUpload = async ({ file }) => {
     const res = await uploadAvatar(file)
     user.value.avatar = res.data.url
     authStore.user.avatar = res.data.url
+    localStorage.setItem('user', JSON.stringify(authStore.user))
     ElMessage.success('头像更新成功')
   } catch {}
   uploading.value = false

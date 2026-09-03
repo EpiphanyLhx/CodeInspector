@@ -5,12 +5,12 @@
       <div class="toolbar-left">
         <h2>深度统计分析</h2>
         <span class="subtitle" v-if="selectedProjectId">当前项目：{{ selectedProject?.name }}</span>
-        <span class="subtitle" v-else>我的全部代码汇总</span>
+        <span class="subtitle" v-else>全部代码汇总</span>
       </div>
       <div class="toolbar-right">
         <el-select v-model="selectedProjectId" placeholder="全部项目" clearable
           @change="onProjectChange" size="large" style="width:240px;">
-          <el-option label="📊 全部项目（汇总）" :value="null" />
+          <el-option label="全部项目（汇总）" :value="null" />
           <el-option v-for="p in reviewedProjects" :key="p.id" :label="p.name" :value="p.id" />
         </el-select>
       </div>
