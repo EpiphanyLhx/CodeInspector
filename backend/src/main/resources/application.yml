@@ -54,18 +54,18 @@ mybatis-plus:
 
 # JWT
 jwt:
-  secret: REPLACED_USE_ENV_JWT_SECRET=
+  secret: ${JWT_SECRET}
   expiration: 604800000
 
 # AES encryption for sensitive data (API Keys, etc.)
 security:
-  aes-secret: ${AES_SECRET:REPLACED_USE_ENV_AES_SECRET}
+  aes-secret: ${AES_SECRET}
 
 # AI Config - 通义千问 / 文心一言
 ai:
   provider: tongyi  # tongyi / wenxin
   tongyi:
-    api-key: sk-REPLACED_USE_ENV_DASHSCOPE_API_KEY
+    api-key: ${DASHSCOPE_API_KEY}
     base-url: https://dashscope.aliyuncs.com/api/v1
     model: qwen-max
   wenxin:

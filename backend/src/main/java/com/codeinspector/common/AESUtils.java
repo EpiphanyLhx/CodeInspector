@@ -19,7 +19,7 @@ public class AESUtils {
 
     private final SecretKeySpec secretKey;
 
-    public AESUtils(@Value("${security.aes-secret:REPLACED_USE_ENV_AES_SECRET}") String secret) {
+    public AESUtils(@Value("${security.aes-secret}") String secret) {
         try {
             // 使用SHA-256确保密钥长度为256位
             MessageDigest sha = MessageDigest.getInstance("SHA-256");
